@@ -11,7 +11,8 @@ import com.example.diettracker.ui.screens.*
 fun AppNavGraph() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = Screen.Login.route) {
+    NavHost(navController = navController, startDestination = Screen.Welcome.route) {
+        composable (Screen.Welcome.route){WelcomeScreen(navController)}
         composable(Screen.Login.route) { LoginScreen(navController) }
         composable(Screen.Register.route) { RegisterScreen() }
         composable(Screen.Home.route) { HomeScreen() }
