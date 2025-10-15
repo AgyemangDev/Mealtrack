@@ -1,12 +1,15 @@
 package com.example.diettracker.ui.components.buttons
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -16,11 +19,17 @@ fun CustomButton(
     onClick: suspend () -> Unit,
     icon: ImageVector? = null,
     spinnerDelay: Long = 200L,
-    backgroundColor: Color = Color(0xFF00A86B),  // default green
-    contentColor: Color = Color.White             // default white for text & icon
+    backgroundColor: Color = Color(0xFF668405),
+    contentColor: Color = Color.White,
+    modifier: Modifier = Modifier // allow external customization
 ) {
     var isLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    val isInverted = contentColor != Color.White
+    val actualBackground = if (isInverted) Color.White else backgroundColor
+    val actualContent = if (isInverted) contentColor else Color.White
+    val borderStroke = if (isInverted) BorderStroke(2.dp, contentColor) else null
 
     Button(
         onClick = {
@@ -44,30 +53,38 @@ fun CustomButton(
         },
         enabled = !isLoading,
         colors = ButtonDefaults.buttonColors(
-            containerColor = backgroundColor,   // background
-            contentColor = contentColor         // icon/text color
-        )
+            containerColor = actualBackground,
+            contentColor = actualContent
+        ),
+        border = borderStroke,
+        modifier = modifier
+            .fillMaxWidth()   // <-- take full width of parent
+            .height(50.dp)   // keep fixed height
     ) {
         if (isLoading) {
             CircularProgressIndicator(
                 strokeWidth = 2.dp,
                 modifier = Modifier.size(24.dp),
-                color = contentColor
+                color = actualContent
             )
         } else {
-            Row {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
                 if (icon != null) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = contentColor
+                        modifier = Modifier.size(26.dp),
+                        tint = actualContent
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                 }
                 Text(
                     text = text,
-                    color = contentColor
+                    color = actualContent,
+                    fontSize = 18.sp,
                 )
             }
         }

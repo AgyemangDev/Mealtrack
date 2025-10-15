@@ -22,40 +22,44 @@ fun WelcomeScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF6FAF5)),
-        contentAlignment = Alignment.Center
+            .background(Color(0xFFF6FAF5)).padding(vertical = 200.dp)
+
     ) {
         Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.SpaceEvenly // evenly distribute children top-to-bottom
         ) {
+            // App Logo
             Image(
                 painter = painterResource(id = R.drawable.welcomeimage1),
                 contentDescription = "App Logo",
-                modifier = Modifier
-                    .size(300.dp)
-                    .padding(bottom = 16.dp)
+                modifier = Modifier.size(220.dp)
             )
 
-            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+            Spacer(modifier = Modifier.height(20.dp))
+            // Title & Description
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "Eat Smarter, Live Better",
-                    fontSize = 35.sp,
+                    fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black,
-                    lineHeight = 40.sp,
+                    lineHeight = 36.sp,
                     textAlign = TextAlign.Center
                 )
+                Spacer(modifier = Modifier.height(13.dp))
                 Text(
                     text = "MealTrack helps you understand your nutrition, making healthy eating simple and enjoyable every day.",
                     fontSize = 16.sp,
                     color = Color(0xFF45464A),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 8.dp)
+                    textAlign = TextAlign.Center
                 )
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(40.dp))
+            // Modal Buttons
             WelcomeScreenModal(navController = navController)
         }
     }

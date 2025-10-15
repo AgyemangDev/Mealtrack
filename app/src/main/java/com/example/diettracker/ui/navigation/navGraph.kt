@@ -15,6 +15,8 @@ fun AppNavGraph() {
         composable (Screen.Welcome.route){WelcomeScreen(navController)}
         composable(Screen.Login.route) { LoginScreen(navController) }
         composable(Screen.Register.route) { RegisterScreen() }
+        composable(Screen.AgeRange.route) { AgeRange() }
+        composable(Screen.DailyUsage.route) { DailyUsage() }
         composable(Screen.Home.route) { HomeScreen() }
         composable(Screen.Progress.route) { ProgressScreen() }
         composable(Screen.Setting.route) { SettingScreen() }
