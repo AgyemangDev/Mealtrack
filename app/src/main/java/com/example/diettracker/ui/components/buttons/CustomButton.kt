@@ -7,21 +7,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.vector.ImageVector
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun CustomButton(
     text: String,
-    onClick: suspend () -> Unit,
+    onClick: () -> Unit,
     icon: ImageVector? = null,
-    spinnerDelay: Long = 200L,
+    spinnerDelay: Long = 0L,
     backgroundColor: Color = Color(0xFF668405),
     contentColor: Color = Color.White,
-    modifier: Modifier = Modifier // allow external customization
+    modifier: Modifier = Modifier
 ) {
     var isLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -33,20 +33,11 @@ fun CustomButton(
 
     Button(
         onClick = {
-            scope.launch {
-                var showSpinner = false
-                val spinnerJob = launch {
-                    delay(spinnerDelay)
-                    showSpinner = true
+            if (!isLoading) {
+                scope.launch {
                     isLoading = true
-                }
-
-                // Run the actual operation
-                onClick()
-
-                // Cancel spinner if function finished early
-                spinnerJob.cancel()
-                if (showSpinner) {
+                    delay(spinnerDelay)
+                    onClick()
                     isLoading = false
                 }
             }
@@ -58,8 +49,8 @@ fun CustomButton(
         ),
         border = borderStroke,
         modifier = modifier
-            .fillMaxWidth()   // <-- take full width of parent
-            .height(50.dp)   // keep fixed height
+            .fillMaxWidth()
+            .height(50.dp)
     ) {
         if (isLoading) {
             CircularProgressIndicator(
@@ -79,7 +70,7 @@ fun CustomButton(
                         modifier = Modifier.size(26.dp),
                         tint = actualContent
                     )
-                    Spacer(modifier = Modifier.size(8.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
                 Text(
                     text = text,
