@@ -21,6 +21,7 @@ import com.example.diettracker.ui.navigation.Screen
 import com.example.diettracker.ui.components.dialogs.AppAlertDialog
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import com.example.diettracker.ui.utils.ValidationUtils
 
 @Composable
 fun RegisterScreen(navController: NavController) {
@@ -56,13 +57,15 @@ fun RegisterScreen(navController: NavController) {
                     .padding(horizontal = 20.dp, vertical = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Full Name field with auto-format
                 AppTextField(
                     label = "Full Name",
                     placeholder = "e.g. John Doe",
                     value = fullName,
-                    onValueChange = { fullName = it }
+                    onValueChange = { fullName = ValidationUtils.formatFullName(it) }
                 )
 
+                // Email field
                 AppTextField(
                     label = "Email",
                     placeholder = "mealtrack@example.com",
@@ -70,6 +73,7 @@ fun RegisterScreen(navController: NavController) {
                     onValueChange = { email = it }
                 )
 
+                // Password field
                 AppTextField(
                     label = "Password",
                     placeholder = "Enter your password",
@@ -78,6 +82,7 @@ fun RegisterScreen(navController: NavController) {
                     isPassword = true
                 )
 
+                // Confirm Password field
                 AppTextField(
                     label = "Confirm Password",
                     placeholder = "Re-enter your password",
@@ -97,12 +102,25 @@ fun RegisterScreen(navController: NavController) {
                                     errorMessage = "Full name is required"
                                     showDialog = true
                                 }
+                                !ValidationUtils.isValidFullName(fullName) -> {
+                                    errorMessage = "Full name must contain at least two words"
+                                    showDialog = true
+                                }
                                 email.isBlank() -> {
                                     errorMessage = "Email is required"
                                     showDialog = true
                                 }
+                                !ValidationUtils.isValidEmail(email) -> {
+                                    errorMessage = "Please enter a valid email address"
+                                    showDialog = true
+                                }
                                 password.isBlank() -> {
                                     errorMessage = "Password is required"
+                                    showDialog = true
+                                }
+                                !ValidationUtils.isValidPassword(password) -> {
+                                    errorMessage =
+                                        "Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character"
                                     showDialog = true
                                 }
                                 password != confirmPassword -> {
@@ -111,13 +129,19 @@ fun RegisterScreen(navController: NavController) {
                                 }
                                 else -> {
                                     isLoading = true
-                                    // Encode parameters for URL safety
-                                    val encodedFullName = URLEncoder.encode(fullName, StandardCharsets.UTF_8.toString())
-                                    val encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8.toString())
-                                    val encodedPassword = URLEncoder.encode(password, StandardCharsets.UTF_8.toString())
+                                    val encodedFullName =
+                                        URLEncoder.encode(fullName, StandardCharsets.UTF_8.toString())
+                                    val encodedEmail =
+                                        URLEncoder.encode(email, StandardCharsets.UTF_8.toString())
+                                    val encodedPassword =
+                                        URLEncoder.encode(password, StandardCharsets.UTF_8.toString())
 
                                     navController.navigate(
-                                        Screen.AgeRange.createRoute(encodedFullName, encodedEmail, encodedPassword)
+                                        Screen.AgeRange.createRoute(
+                                            encodedFullName,
+                                            encodedEmail,
+                                            encodedPassword
+                                        )
                                     )
                                     isLoading = false
                                 }
@@ -153,7 +177,7 @@ fun RegisterScreen(navController: NavController) {
         AppAlertDialog(
             showDialog = showDialog,
             onDismiss = { showDialog = false },
-            title = if (errorMessage.contains("not match")) "Password Mismatch" else "Validation Error",
+            title = if (errorMessage.contains("match")) "Password Mismatch" else "Validation Error",
             message = errorMessage
         )
     }

@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.diettracker.data.ageRangeData
 import com.example.diettracker.ui.components.lists.NutrientCardsList
-import com.example.diettracker.ui.components.dialogs.AccountCreatedDialog
 import com.example.diettracker.ui.components.headers.AppHeader
 import com.example.diettracker.ui.components.buttons.FinishButton
 import com.example.diettracker.ui.components.cards.AgeRangeSummaryCard
@@ -111,15 +110,4 @@ fun DailyUsage(
             }
         }
     }
-
-    // Success Dialog
-    AccountCreatedDialog(
-        navController = navController ?: return,
-        showDialog = showSuccess,
-        onNavigateToHome = {
-            navController.navigate(Screen.Home.route) {
-                popUpTo(Screen.Register.route) { inclusive = true }
-            }
-        }
-    )
 }
