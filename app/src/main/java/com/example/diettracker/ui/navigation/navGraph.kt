@@ -77,7 +77,6 @@ fun AppNavGraph() {
         composable(Screen.Home.route) { HomeScreen() }
         composable(Screen.AllFoodsScreen.route) { AllFoodsScreen(navController) }
         composable(Screen.Setting.route) { SettingScreen() }
-        composable(Screen.LogMeal.route) { LogMealScreen() }
 
         // 🍱 Food-related Screens
         composable("AllFoods") { AllFoodsScreen(navController) }

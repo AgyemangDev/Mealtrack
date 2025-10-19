@@ -22,6 +22,6 @@ sealed class Screen(val route: String) {
 
     object Home : Screen("home")
     object AllFoodsScreen : Screen("allfood")
-    object LogMeal : Screen("logmeal")
+
     object Setting : Screen("setting")
 }

@@ -13,8 +13,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.diettracker.ui.components.BottomNavBar
-import com.example.diettracker.ui.components.BottomNavItem
+import com.example.diettracker.ui.navigation.BottomNavBar
+import com.example.diettracker.ui.navigation.BottomNavItem
 
 @Composable
 fun MainScreen() {
@@ -36,6 +36,7 @@ fun MainScreen() {
     }
 }
 
+
 @Composable
 fun NavigationHost(navController: NavHostController) {
     NavHost(
@@ -50,36 +51,28 @@ fun NavigationHost(navController: NavHostController) {
             )
         }
 
-        composable(BottomNavItem.Search.route) {
-            AllNutrientsScreen(
-                onBackClick = {
-                    navController.popBackStack()
-                }
-            )
+        composable(BottomNavItem.Nutrients.route) {
+            AllNutrientsScreen(onBackClick = { navController.popBackStack() })
         }
 
-        composable(BottomNavItem.AddMeal.route) {
-            LogMealScreen()
+        composable(BottomNavItem.Foods.route) {
+            AllFoodsScreen(navController) // Food list
         }
 
-        composable(BottomNavItem.AllFoodsScreen.route) {
-            AllFoodsScreen(navController)
+        composable(BottomNavItem.AddFood.route) {
+            AddFoodsScreen(navController) // Add new food
         }
 
         composable(BottomNavItem.Profile.route) {
             SettingScreen()
         }
 
-        // All Nutrients Screen (also accessible from "More" button)
         composable("all_nutrients") {
-            AllNutrientsScreen(
-                onBackClick = {
-                    navController.popBackStack()
-                }
-            )
+            AllNutrientsScreen(onBackClick = { navController.popBackStack() })
         }
     }
 }
+
 
 // Placeholder for Search - you can replace this later
 @Composable

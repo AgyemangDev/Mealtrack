@@ -1,5 +1,4 @@
-
-package com.example.diettracker.ui.components
+package com.example.diettracker.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -18,20 +17,22 @@ sealed class BottomNavItem(
     val label: String
 ) {
     object Home : BottomNavItem("home", Icons.Default.Home, "Home")
-    object Search : BottomNavItem("search", Icons.Default.LocalDining, "Nutrients")
-    object AddMeal : BottomNavItem("logmeal", Icons.Default.Restaurant, "Foods")
-    object AllFoodsScreen : BottomNavItem("allfood", Icons.Default.Add, "Add Food")
-    object Profile : BottomNavItem("setting", Icons.Default.Person, "Profile")
+    object Nutrients : BottomNavItem("nutrients", Icons.Default.LocalDining, "Nutrients")
+    object Foods : BottomNavItem("foods", Icons.Default.Restaurant, "Foods")      // AllFoodsScreen
+    object AddFood : BottomNavItem("addfood", Icons.Default.Add, "Add Food")       // AddFoodsScreen
+    object Profile : BottomNavItem("profile", Icons.Default.Person, "Profile")
 }
+
+
 
 @Composable
 fun BottomNavBar(
     navController: NavController,
     items: List<BottomNavItem> = listOf(
         BottomNavItem.Home,
-        BottomNavItem.Search,
-        BottomNavItem.AddMeal,
-        BottomNavItem.AllFoodsScreen,
+        BottomNavItem.Nutrients,
+        BottomNavItem.Foods,
+        BottomNavItem.AddFood,
         BottomNavItem.Profile
     )
 ) {
