@@ -81,6 +81,6 @@ fun AppNavGraph() {
 
         // 🍱 Food-related Screens
         composable("AllFoods") { AllFoodsScreen(navController) }
-        composable("AddFoods") { AddFoodsScreen(navController) }
+        composable("addfood") { AddFoodScreen() }
     }
 }

@@ -20,8 +20,10 @@ sealed class BottomNavItem(
     object Home : BottomNavItem("home", Icons.Default.Home, "Home")
     object Search : BottomNavItem("search", Icons.Default.LocalDining, "Nutrients")
     object AddMeal : BottomNavItem("logmeal", Icons.Default.Restaurant, "Foods")
-    object AllFoodsScreen : BottomNavItem("allfood", Icons.Default.Add, "Add Food")
+    
+    object AddFoodScreen: BottomNavItem("addfood", Icons.Default.Add, "Add Food")
     object Profile : BottomNavItem("setting", Icons.Default.Person, "Profile")
+    object AllFoodsScreen : BottomNavItem("allfoods", Icons.Default.List, "All Foods")
 }
 
 @Composable
@@ -31,7 +33,7 @@ fun BottomNavBar(
         BottomNavItem.Home,
         BottomNavItem.Search,
         BottomNavItem.AddMeal,
-        BottomNavItem.AllFoodsScreen,
+        BottomNavItem.AddFoodScreen,
         BottomNavItem.Profile
     )
 ) {
