@@ -1,7 +1,6 @@
 package com.example.diettracker.ui.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -14,11 +13,10 @@ fun AppNavGraph() {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = Screen.Welcome.route) {
+        // Authentication & Onboarding Screens (No Bottom Nav)
         composable(Screen.Welcome.route) { WelcomeScreen(navController) }
         composable(Screen.Login.route) { LoginScreen(navController) }
         composable(Screen.Register.route) { RegisterScreen(navController) }
-
-
 
         composable(Screen.AgeRange.route) { backStackEntry ->
             val fullName = URLDecoder.decode(
@@ -60,7 +58,6 @@ fun AppNavGraph() {
                 StandardCharsets.UTF_8.toString()
             )
 
-            // Debug: Log the received ageRange
             println("DEBUG: Received ageRange = '$ageRange'")
 
             DailyUsage(
@@ -72,16 +69,18 @@ fun AppNavGraph() {
             )
         }
 
+        composable(Screen.Main.route) {
+            MainScreen()
+        }
+
+        // 🏠 Main App Screens (with Bottom Navigation elsewhere)
         composable(Screen.Home.route) { HomeScreen() }
         composable(Screen.Progress.route) { ProgressScreen() }
         composable(Screen.Setting.route) { SettingScreen() }
         composable(Screen.LogMeal.route) { LogMealScreen() }
+
+        // 🍱 Food-related Screens
         composable("AllFoods") { AllFoodsScreen(navController) }
         composable("AddFoods") { AddFoodsScreen(navController) }
     }
-}
-
-@Composable
-fun AllfoodsScreen(x0: NavHostController) {
-    TODO("Not yet implemented")
 }
