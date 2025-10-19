@@ -105,7 +105,7 @@ fun LoginScreen(navController: NavController) {
                                 .addOnCompleteListener { task ->
                                     isLoading = false
                                     if (task.isSuccessful) {
-                                        navController.navigate(Screen.Home.route) {
+                                        navController.navigate(Screen.Main.route) {
                                             popUpTo(Screen.Login.route) { inclusive = true }
                                         }
                                     } else {

@@ -1,5 +1,7 @@
 package com.example.diettracker.ui.navigation
 
+
+
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -13,6 +15,7 @@ fun AppNavGraph() {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = Screen.Welcome.route) {
+        // Authentication & Onboarding Screens (No Bottom Nav)
         composable(Screen.Welcome.route) { WelcomeScreen(navController) }
         composable(Screen.Login.route) { LoginScreen(navController) }
         composable(Screen.Register.route) { RegisterScreen(navController) }
@@ -69,9 +72,9 @@ fun AppNavGraph() {
             )
         }
 
-        composable(Screen.Home.route) { HomeScreen() }
-        composable(Screen.Progress.route) { ProgressScreen() }
-        composable(Screen.Setting.route) { SettingScreen() }
-        composable(Screen.LogMeal.route) { LogMealScreen() }
+        // Main App with Bottom Navigation
+        composable("main") {
+            MainScreen()
+        }
     }
 }
