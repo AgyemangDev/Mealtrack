@@ -75,7 +75,7 @@ fun AppNavGraph() {
 
         // 🏠 Main App Screens (with Bottom Navigation elsewhere)
         composable(Screen.Home.route) { HomeScreen() }
-        composable(Screen.Progress.route) { ProgressScreen() }
+        composable(Screen.AllFoodsScreen.route) { AllFoodsScreen(navController) }
         composable(Screen.Setting.route) { SettingScreen() }
         composable(Screen.LogMeal.route) { LogMealScreen() }
 

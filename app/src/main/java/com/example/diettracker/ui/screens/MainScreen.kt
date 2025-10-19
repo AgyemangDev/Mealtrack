@@ -62,8 +62,8 @@ fun NavigationHost(navController: NavHostController) {
             LogMealScreen()
         }
 
-        composable(BottomNavItem.Progress.route) {
-            ProgressScreen()
+        composable(BottomNavItem.AllFoodsScreen.route) {
+            AllFoodsScreen(navController)
         }
 
         composable(BottomNavItem.Profile.route) {

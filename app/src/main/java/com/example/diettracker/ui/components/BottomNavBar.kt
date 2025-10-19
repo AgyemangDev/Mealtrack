@@ -20,7 +20,7 @@ sealed class BottomNavItem(
     object Home : BottomNavItem("home", Icons.Default.Home, "Home")
     object Search : BottomNavItem("search", Icons.Default.LocalDining, "Nutrients")
     object AddMeal : BottomNavItem("logmeal", Icons.Default.Restaurant, "Foods")
-    object Progress : BottomNavItem("progress", Icons.Default.Add, "Add Food")
+    object AllFoodsScreen : BottomNavItem("allfood", Icons.Default.Add, "Add Food")
     object Profile : BottomNavItem("setting", Icons.Default.Person, "Profile")
 }
 
@@ -31,7 +31,7 @@ fun BottomNavBar(
         BottomNavItem.Home,
         BottomNavItem.Search,
         BottomNavItem.AddMeal,
-        BottomNavItem.Progress,
+        BottomNavItem.AllFoodsScreen,
         BottomNavItem.Profile
     )
 ) {
