@@ -24,26 +24,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.diettracker.models.FoodItem
 
-data class FoodItem(
-    val name: String,
-    val unit: String,
-    val calories: Int,
-    val protein: Int,
-    val carbs: Int,
-    val fats: Int
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllFoodsScreen(navController: NavHostController) {
     val foodItemsByDate = mapOf(
         "Today" to listOf(
-            FoodItem("Apple", "1 unit", 95, 0, 25, 0)
+            FoodItem(name = "Apple", unit = "1 unit", calories = 95, protein = 0, carbs = 25, fats = 0)
         ),
         "October 18, 2023" to listOf(
-            FoodItem("Lentil Soup", "350ml", 320, 18, 40, 8),
-            FoodItem("Avocado Toast", "1 slice", 280, 7, 30, 15)
+            FoodItem(name = "Lentil Soup", unit = "350ml", calories = 320, protein = 18, carbs = 40, fats = 8),
+            FoodItem(name = "Avocado Toast", unit = "1 slice", calories = 280, protein = 7, carbs = 30, fats = 15)
         )
     )
 
@@ -98,7 +91,7 @@ fun FoodItemCard(food: FoodItem) {
         Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
             Text(text = food.name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = food.unit, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+            Text(text = food.unit ?: "", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(Modifier.fillMaxWidth()) {
