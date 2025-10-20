@@ -1,85 +1,57 @@
 package com.example.diettracker.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import com.example.diettracker.ui.components.cards.MealInfo
 import com.example.diettracker.ui.screens.*
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
+import com.example.diettracker.viewmodel.FoodViewModel
 
 @Composable
-fun AppNavGraph() {
-    val navController = rememberNavController()
+fun AppNavGraph(navController: NavHostController) {
+    // Create a shared meals list that persists across navigation
+    val meals = remember { mutableStateListOf<MealInfo>() }
 
-    NavHost(navController = navController, startDestination = Screen.Welcome.route) {
-        // Authentication & Onboarding Screens (No Bottom Nav)
-        composable(Screen.Welcome.route) { WelcomeScreen(navController) }
-        composable(Screen.Login.route) { LoginScreen(navController) }
-        composable(Screen.Register.route) { RegisterScreen(navController) }
+    // Get shared ViewModel instance
+    val foodViewModel: FoodViewModel = viewModel()
 
-        composable(Screen.AgeRange.route) { backStackEntry ->
-            val fullName = URLDecoder.decode(
-                backStackEntry.arguments?.getString("fullName") ?: "",
-                StandardCharsets.UTF_8.toString()
+    NavHost(
+        navController = navController,
+        startDestination = BottomNavItem.Home.route
+    ) {
+        composable(route = BottomNavItem.Home.route) {
+            HomeScreen(
+                meals = meals,
+                onNavigateToAllNutrients = {
+                    navController.navigate(BottomNavItem.Nutrients.route)
+                }
             )
-            val email = URLDecoder.decode(
-                backStackEntry.arguments?.getString("email") ?: "",
-                StandardCharsets.UTF_8.toString()
-            )
-            val password = URLDecoder.decode(
-                backStackEntry.arguments?.getString("password") ?: "",
-                StandardCharsets.UTF_8.toString()
-            )
+        }
 
-            AgeRange(
+        composable(route = BottomNavItem.Nutrients.route) {
+            AllNutrientsScreen(
+                meals = meals,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = BottomNavItem.Foods.route) {
+            AllFoodsScreen(
                 navController = navController,
-                fullName = fullName,
-                email = email,
-                password = password
+                foodViewModel = foodViewModel
             )
         }
 
-        composable(Screen.DailyUsage.route) { backStackEntry ->
-            val fullName = URLDecoder.decode(
-                backStackEntry.arguments?.getString("fullName") ?: "",
-                StandardCharsets.UTF_8.toString()
-            )
-            val email = URLDecoder.decode(
-                backStackEntry.arguments?.getString("email") ?: "",
-                StandardCharsets.UTF_8.toString()
-            )
-            val password = URLDecoder.decode(
-                backStackEntry.arguments?.getString("password") ?: "",
-                StandardCharsets.UTF_8.toString()
-            )
-            val ageRange = URLDecoder.decode(
-                backStackEntry.arguments?.getString("ageRange") ?: "",
-                StandardCharsets.UTF_8.toString()
-            )
-
-            println("DEBUG: Received ageRange = '$ageRange'")
-
-            DailyUsage(
-                navController = navController,
-                fullName = fullName,
-                email = email,
-                password = password,
-                ageRange = ageRange
-            )
+        composable(route = BottomNavItem.AddFood.route) {
+            AddFoodScreen(foodViewModel = foodViewModel)
         }
 
-        composable(Screen.Main.route) {
-            MainScreen()
+        composable(route = BottomNavItem.Profile.route) {
+            SettingScreen()
         }
-
-        // 🏠 Main App Screens (with Bottom Navigation elsewhere)
-        composable(Screen.Home.route) { HomeScreen() }
-        composable(Screen.AllFoodsScreen.route) { AllFoodsScreen(navController) }
-        composable(Screen.Setting.route) { SettingScreen() }
-
-        // 🍱 Food-related Screens
-        composable("AllFoods") { AllFoodsScreen(navController) }
-        composable("addfood") { AddFoodScreen(navController) }
     }
 }
