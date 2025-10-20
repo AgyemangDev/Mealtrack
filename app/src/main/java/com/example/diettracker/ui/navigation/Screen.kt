@@ -6,7 +6,7 @@ sealed class Screen(val route: String) {
     object Register : Screen("register")
 
     object AgeRange : Screen("agerange/{fullName}/{email}/{password}") {
-        
+
         fun createRoute(fullName: String, email: String, password: String) =
             "agerange/$fullName/$email/$password"
     }
@@ -22,6 +22,8 @@ sealed class Screen(val route: String) {
 
     object Home : Screen("home")
     object AllFoodsScreen : Screen("allfood")
+    object AddFood : Screen("addfood")
+    object LogMeal : Screen("logmeal")
 
     object Setting : Screen("setting")
 }
