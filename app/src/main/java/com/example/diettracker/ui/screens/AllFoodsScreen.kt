@@ -90,23 +90,23 @@ fun AllFoodsScreen(navController: NavHostController, foodViewModel: FoodViewMode
             }
         }
 
-        showEditDialog?.let {
+        showEditDialog?.let { foodToEdit ->
             EditFoodDialog(
-                food = it,
+                food = foodToEdit,
                 onDismiss = { showEditDialog = null },
                 onConfirm = { updatedFood ->
-                    foodViewModel.updateFood(updatedFood)
+                    foodViewModel.updateFood(foodToEdit, updatedFood)
                     showEditDialog = null
                 }
             )
         }
 
-        showDeleteDialog?.let {
+        showDeleteDialog?.let { foodToDelete ->
             DeleteConfirmationDialog(
-                food = it,
+                food = foodToDelete,
                 onDismiss = { showDeleteDialog = null },
                 onConfirm = {
-                    foodViewModel.deleteFood(it)
+                    foodViewModel.deleteFood(foodToDelete)
                     showDeleteDialog = null
                 }
             )

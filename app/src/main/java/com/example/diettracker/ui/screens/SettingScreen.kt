@@ -2,18 +2,7 @@ package com.example.diettracker.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -73,12 +62,10 @@ fun SettingScreen(settingsViewModel: SettingsViewModel = viewModel()) {
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Profile Section
             ProfileCard(userName, userEmail) { showEditProfileDialog = true }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Goals Section
             SettingsSection(title = "Goals") {
                 SettingsItem(
                     icon = Icons.Default.Info,
@@ -96,7 +83,6 @@ fun SettingScreen(settingsViewModel: SettingsViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Preferences Section
             SettingsSection(title = "Preferences") {
                 SettingsSwitchItem(
                     icon = Icons.Default.DateRange,
@@ -119,19 +105,14 @@ fun SettingScreen(settingsViewModel: SettingsViewModel = viewModel()) {
                     onClick = { showUnitsDialog = true }
                 )
             }
-            
-            // Other sections would go here...
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Logout Button
             LogoutButton { showLogoutDialog = true }
 
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
-
-    // -- Dialogs --
 
     if (showEditProfileDialog) {
         EditProfileDialog(currentName = userName, currentEmail = userEmail, onDismiss = { showEditProfileDialog = false }) { name, email ->
@@ -141,8 +122,8 @@ fun SettingScreen(settingsViewModel: SettingsViewModel = viewModel()) {
     }
 
     if (showGoalsDialog) {
-        GoalsDialog(currentCalories = calorieGoal, currentProtein = proteinGoal, currentCarbs = carbsGoal, currentFat = fatGoal, onDismiss = { showGoalsDialog = false }) { calories, protein, carbs, fat ->
-            settingsViewModel.updateNutritionGoals(calories, protein, carbs, fat)
+        GoalsDialog(currentCalories = calorieGoal, currentProtein = proteinGoal, currentCarbs = carbsGoal, currentFat = fatGoal, onDismiss = { showGoalsDialog = false }) { c, p, carbs, f ->
+            settingsViewModel.updateNutritionGoals(c, p, carbs, f)
             showGoalsDialog = false
         }
     }
@@ -161,24 +142,6 @@ fun SettingScreen(settingsViewModel: SettingsViewModel = viewModel()) {
         }
     }
 
-    if (showClearDataDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearDataDialog = false },
-            title = { Text("Clear History") },
-            text = { Text("Are you sure you want to delete all meal records? This action cannot be undone.") },
-            confirmButton = {
-                Button(onClick = {
-                    settingsViewModel.clearHistory()
-                    showClearDataDialog = false
-                    scope.launch { snackbarHostState.showSnackbar("All meal records have been deleted.") }
-                }, colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) {
-                    Text("Clear Data")
-                }
-            },
-            dismissButton = { Button(onClick = { showClearDataDialog = false }) { Text("Cancel") } }
-        )
-    }
-
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
@@ -188,7 +151,6 @@ fun SettingScreen(settingsViewModel: SettingsViewModel = viewModel()) {
                 Button(onClick = {
                     settingsViewModel.logout()
                     showLogoutDialog = false
-                    // Navigation logic to go back to login screen should be handled here
                 }) { Text("Logout") }
             },
             dismissButton = { Button(onClick = { showLogoutDialog = false }) { Text("Cancel") } }
@@ -196,7 +158,6 @@ fun SettingScreen(settingsViewModel: SettingsViewModel = viewModel()) {
     }
 }
 
-// -- Reusable Composables (Placeholders) --
 
 @Composable
 fun ProfileCard(userName: String, userEmail: String, onEditClick: () -> Unit) {
@@ -304,17 +265,21 @@ fun EditProfileDialog(currentName: String, currentEmail: String, onDismiss: () -
 @Composable
 fun GoalsDialog(currentCalories: Int, currentProtein: Int, currentCarbs: Int, currentFat: Int, onDismiss: () -> Unit, onSave: (Int, Int, Int, Int) -> Unit) {
     var calories by remember { mutableStateOf(currentCalories.toString()) }
-    // Add states for protein, carbs, fat
+    var protein by remember { mutableStateOf(currentProtein.toString()) }
+    var carbs by remember { mutableStateOf(currentCarbs.toString()) }
+    var fat by remember { mutableStateOf(currentFat.toString()) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit Daily Goals") },
         text = {
             Column {
                 OutlinedTextField(value = calories, onValueChange = { calories = it }, label = { Text("Calories") })
-                // Add fields for protein, carbs, fat here
+                OutlinedTextField(value = protein, onValueChange = { protein = it }, label = { Text("Protein (g)") })
+                OutlinedTextField(value = carbs, onValueChange = { carbs = it }, label = { Text("Carbs (g)") })
+                OutlinedTextField(value = fat, onValueChange = { fat = it }, label = { Text("Fat (g)") })
             }
         },
-        confirmButton = { Button(onClick = { onSave(calories.toIntOrNull() ?: 0, currentProtein, currentCarbs, currentFat) }) { Text("Save") } },
+        confirmButton = { Button(onClick = { onSave(calories.toIntOrNull() ?: 0, protein.toIntOrNull() ?: 0, carbs.toIntOrNull() ?: 0, fat.toIntOrNull() ?: 0) }) { Text("Save") } },
         dismissButton = { Button(onClick = onDismiss) { Text("Cancel") } }
     )
 }

@@ -1,20 +1,19 @@
 package com.example.diettracker.models
 
-import com.google.firebase.firestore.DocumentId
 import java.util.Date
+import java.util.UUID
 
 /**
- * Represents a food item.
- * Note: An empty constructor is required for Firestore deserialization.
+ * Represents a food item with a locally unique ID.
  */
 data class Food(
-    @DocumentId val id: String = "", // Firestore will automatically populate this with the document ID
-    val name: String = "",
-    val calories: Double = 0.0,
-    val protein: Double = 0.0,
-    val carbs: Double = 0.0,
-    val fat: Double = 0.0,
-    val amount: Double = 0.0,
-    val unit: String = "",
-    val date: Date = Date()
+    val id: String = UUID.randomUUID().toString(), // A unique ID for local operations
+    val name: String,
+    val calories: Double,
+    val protein: Double,
+    val carbs: Double,
+    val fat: Double,
+    val amount: Double,
+    val unit: String,
+    val date: Date = Date() // Default to current date
 )
