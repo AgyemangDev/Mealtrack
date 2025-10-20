@@ -7,9 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.diettracker"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.diettracker"
@@ -55,6 +53,10 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.datastore.preferences)
+
+    // Lifecycle and ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
 
     // Material Icons
     implementation(libs.androidx.compose.material.icons.extended)
@@ -72,24 +74,21 @@ dependencies {
     // Debug tools
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.7.0")
 
+    // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
-    // Firebase Firestore
     implementation("com.google.firebase:firebase-firestore-ktx")
-
-// Firebase Auth
     implementation("com.google.firebase:firebase-auth-ktx")
-
-// Firebase Storage
     implementation("com.google.firebase:firebase-storage-ktx")
-
-// (Optional) Realtime Database
     implementation("com.google.firebase:firebase-database-ktx")
 
+    // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("io.coil-kt:coil-compose:2.5.0")
 
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }
