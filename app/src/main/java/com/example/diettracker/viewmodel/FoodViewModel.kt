@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.diettracker.models.Food
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,22 +19,48 @@ class FoodViewModel : ViewModel() {
     private val _foodItems = MutableStateFlow<List<Food>>(emptyList())
     val foodItems: StateFlow<List<Food>> = _foodItems
 
-    init {
-        auth.currentUser?.uid?.let {
-            viewModelScope.launch {
-                db.collection("users").document(it).collection("foods")
-                    .addSnapshotListener { snapshot, e ->
-                        if (e != null) {
-                            // Handle error
-                            return@addSnapshotListener
-                        }
+    private var firestoreListener: ListenerRegistration? = null
 
-                        snapshot?.let {
-                            _foodItems.value = it.toObjects(Food::class.java)
-                        }
-                    }
-            }
+    private val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+        val user = firebaseAuth.currentUser
+        if (user != null) {
+            attachFirestoreListener(user.uid)
+        } else {
+            detachFirestoreListener()
+            _foodItems.value = emptyList()
         }
+    }
+
+    init {
+        // Listen for auth state changes
+        auth.addAuthStateListener(authStateListener)
+
+        // Immediately check the current user, as the listener only fires on state changes.
+        auth.currentUser?.uid?.let {
+            attachFirestoreListener(it)
+        }
+    }
+
+    private fun attachFirestoreListener(userId: String) {
+        // Detach any existing listener to avoid duplicates
+        detachFirestoreListener()
+        viewModelScope.launch {
+            firestoreListener = db.collection("users").document(userId).collection("foods")
+                .addSnapshotListener { snapshot, e ->
+                    if (e != null) {
+                        _foodItems.value = emptyList()
+                        return@addSnapshotListener
+                    }
+                    snapshot?.let {
+                        _foodItems.value = it.toObjects(Food::class.java)
+                    }
+                }
+        }
+    }
+
+    private fun detachFirestoreListener() {
+        firestoreListener?.remove()
+        firestoreListener = null
     }
 
     fun addFood(food: Food) {
@@ -57,5 +84,11 @@ class FoodViewModel : ViewModel() {
                 .document(food.id)
                 .set(food)
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        auth.removeAuthStateListener(authStateListener)
+        detachFirestoreListener()
     }
 }
