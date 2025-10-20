@@ -1,27 +1,19 @@
 package com.example.diettracker.ui.navigation
 
 sealed class Screen(val route: String) {
+    // Authentication & Onboarding routes
     object Welcome : Screen("welcome")
     object Login : Screen("login")
     object Register : Screen("register")
-
-    object AgeRange : Screen("agerange/{fullName}/{email}/{password}") {
-        
+    object AgeRange : Screen("ageRange/{fullName}/{email}/{password}") {
         fun createRoute(fullName: String, email: String, password: String) =
-            "agerange/$fullName/$email/$password"
+            "ageRange/$fullName/$email/$password"
     }
-
-    object DailyUsage : Screen("dailyusage/{fullName}/{email}/{password}/{ageRange}") {
+    object DailyUsage : Screen("dailyUsage/{fullName}/{email}/{password}/{ageRange}") {
         fun createRoute(fullName: String, email: String, password: String, ageRange: String) =
-            "dailyusage/$fullName/$email/$password/$ageRange"
+            "dailyUsage/$fullName/$email/$password/$ageRange"
     }
 
 
     object Main : Screen("main")
-
-
-    object Home : Screen("home")
-    object AllFoodsScreen : Screen("allfood")
-
-    object Setting : Screen("setting")
 }

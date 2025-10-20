@@ -20,8 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.diettracker.R
+import com.example.diettracker.ui.components.cards.MealInfo
 
-// Data class for nutrient details
 data class NutrientDetail(
     val name: String,
     val current: Int,
@@ -32,14 +32,23 @@ data class NutrientDetail(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AllNutrientsScreen(onBackClick: () -> Unit = {}) {
+fun AllNutrientsScreen(
+    meals: List<MealInfo>,
+    onBackClick: () -> Unit = {}
+) {
+    val totalCalories = meals.sumOf { it.calories }
+    val totalProtein = meals.sumOf { it.protein }
+    val totalCarbs = meals.sumOf { it.carbs }
+    val totalFat = meals.sumOf { it.fat }
+
     val nutrients = listOf(
-        NutrientDetail("Calories", 1850, 2200, "kcal", R.drawable.ic_launcher_foreground),
-        NutrientDetail("Protein", 120, 150, "g", R.drawable.ic_launcher_foreground),
-        NutrientDetail("Carbs", 180, 250, "g", R.drawable.ic_launcher_foreground),
-        NutrientDetail("Fats", 55, 70, "g", R.drawable.ic_launcher_foreground),
-        NutrientDetail("Calcium", 800, 1000, "mg", R.drawable.ic_launcher_foreground),
-        NutrientDetail("Fiber", 20, 30, "g", R.drawable.ic_launcher_foreground)
+        NutrientDetail("Calories", totalCalories, 2200, "kcal", R.drawable.nuts),
+        NutrientDetail("Protein", totalProtein, 150, "g", R.drawable.protein),
+        NutrientDetail("Carbs", totalCarbs, 250, "g", R.drawable.carbs),
+        NutrientDetail("Fats", totalFat, 70, "g", R.drawable.fats),
+        NutrientDetail("Calcium", 0, 1000, "mg", R.drawable.calcium),
+        NutrientDetail("Iron", 0, 30, "mg", R.drawable.iron),
+        NutrientDetail("Vitamins", 0, 30, "g", R.drawable.fruitsandveggies)
     )
 
     Scaffold(
@@ -97,7 +106,6 @@ fun NutrientDetailCard(nutrient: NutrientDetail) {
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Nutrient Image
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -106,12 +114,16 @@ fun NutrientDetailCard(nutrient: NutrientDetail) {
                     .background(Color(0xFFE0E0E0)),
                 contentAlignment = Alignment.Center
             ) {
-
+                Image(
+                    painter = painterResource(id = nutrient.imageRes),
+                    contentDescription = nutrient.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Nutrient Name
             Text(
                 text = nutrient.name,
                 fontSize = 20.sp,
@@ -120,7 +132,6 @@ fun NutrientDetailCard(nutrient: NutrientDetail) {
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Current / Goal
             Text(
                 text = "${nutrient.current}${nutrient.unit} / ${nutrient.goal}${nutrient.unit}",
                 fontSize = 16.sp,
@@ -129,7 +140,6 @@ fun NutrientDetailCard(nutrient: NutrientDetail) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Progress Bar
             val progress = nutrient.current.toFloat() / nutrient.goal.toFloat()
             LinearProgressIndicator(
                 progress = { progress.coerceIn(0f, 1f) },
@@ -144,15 +154,15 @@ fun NutrientDetailCard(nutrient: NutrientDetail) {
     }
 }
 
-
 fun getNutrientColor(nutrientName: String): Color {
     return when (nutrientName.lowercase()) {
         "calories" -> Color(0xFFFFA726)
         "protein" -> Color(0xFFEF5350)
-        "carbs" -> Color(0xFFFFEE58)     
-        "fats" -> Color(0xFF66BB6A)      
+        "carbs" -> Color(0xFFFFEE58)
+        "fats" -> Color(0xFF66BB6A)
         "calcium" -> Color(0xFF42A5F5)
-        "fiber" -> Color(0xFFAB47BC)
+        "iron" -> Color(0xFFAB47BC)
+        "vitamins" -> Color(0xFF4CAF50)
         else -> Color(0xFF4CAF50)
     }
 }
