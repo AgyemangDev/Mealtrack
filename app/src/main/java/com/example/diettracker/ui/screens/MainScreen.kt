@@ -60,7 +60,7 @@ fun NavigationHost(navController: NavHostController) {
         }
 
         composable(BottomNavItem.AddFood.route) {
-            AddFoodScreen() // Add new food
+            AddFoodScreen(navController) // Add new food
         }
 
         composable(BottomNavItem.Profile.route) {
