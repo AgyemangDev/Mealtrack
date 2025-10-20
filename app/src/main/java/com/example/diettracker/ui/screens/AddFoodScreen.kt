@@ -4,97 +4,94 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.diettracker.models.FoodItem
+import com.example.diettracker.models.toFoodItem
 import com.example.diettracker.ui.components.headers.AppHeader
 import com.example.diettracker.ui.components.inputs.FoodSearchBar
 import com.example.diettracker.ui.components.lists.FoodList
 import com.example.diettracker.ui.components.sections.SelectedFoodSection
-import com.example.diettracker.R
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.navigation.NavController
-
-// Sample data for preview and testing
-val foodItemsSample = listOf(
-    FoodItem(
-        name = "Broccoli Florets",
-        imageUrl = R.drawable.ic_launcher_foreground,
-        calories = 55,
-        protein = 4,
-        carbs = 11,
-        fats = 1
-    ),
-    FoodItem(
-        name = "Brown Rice (cooked)",
-        imageUrl = R.drawable.ic_launcher_foreground,
-        calories = 110,
-        protein = 3,
-        carbs = 23,
-        fats = 1
-    ),
-    FoodItem(
-        name = "Grilled Chicken Breast",
-
-        imageUrl = R.drawable.ic_launcher_foreground,
-        calories = 250,
-        protein = 30,
-        carbs = 0,
-        fats = 15
-    )
-)
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import kotlinx.coroutines.launch
+import com.example.diettracker.Interfaces.ApiClient
+import com.example.diettracker.ui.components.buttons.CustomButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddFoodScreen(navController: NavController? = null) {
     var searchQuery by remember { mutableStateOf("") }
+    var foodList by remember { mutableStateOf(listOf<FoodItem>()) }
     var selectedFood by remember { mutableStateOf<FoodItem?>(null) }
     var quantity by remember { mutableStateOf("150") }
-    var foodList by remember { mutableStateOf(foodItemsSample) }
+
+    val scope = rememberCoroutineScope()
 
     Scaffold { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
         ) {
-            AppHeader(
-                title = "Add Food",
-                onBackClick = { navController?.popBackStack() } // safe call
-            )
+            // Scrollable content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 80.dp) // Add bottom padding to avoid overlap with button
+            ) {
+                AppHeader(
+                    title = "Add Food",
+                    onBackClick = { navController?.popBackStack() }
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 FoodSearchBar(
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
-                    onSearchClick = { /* TODO */ },
+                    onSearchClick = {
+                        scope.launch {
+                            try {
+                                val response = ApiClient.api.searchRecipes(
+                                    query = searchQuery,
+                                    number = 6,
+                                    addNutrition = true,
+                                    apiKey = "3a69df17a1e94aae83558dcfd1afef0f"
+                                )
+                                foodList = response.results.map { it.toFoodItem() }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    },
                     searchIcon = Icons.Default.Search
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 FoodList(
-                    foods = foodList.filter { it.name.contains(searchQuery, ignoreCase = true) },
+                    foods = foodList,
                     onFoodSelected = { selectedFood = it }
                 )
 
                 selectedFood?.let {
                     SelectedFoodSection(it, quantity) { quantity = it }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = { /* TODO */ },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
-                ) {
-                    Text("Add Food")
-                }
             }
+
+            // Fixed bottom button
+            CustomButton(
+                text = "Add Food",
+                onClick = { /* TODO: Add food logic */ },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
+            )
         }
     }
 }
@@ -102,7 +99,5 @@ fun AddFoodScreen(navController: NavController? = null) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun AddFoodScreenPreview() {
-    androidx.compose.material3.MaterialTheme {
-        AddFoodScreen()
-    }
+    AddFoodScreen()
 }

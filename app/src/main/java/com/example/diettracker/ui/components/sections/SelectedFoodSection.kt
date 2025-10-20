@@ -1,6 +1,5 @@
 package com.example.diettracker.ui.components.sections
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -8,12 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.diettracker.R
+import coil.compose.AsyncImage
 import com.example.diettracker.models.FoodItem
 
 @Composable
@@ -31,13 +27,12 @@ fun SelectedFoodSection(
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(id = food.imageUrl ?: R.drawable.ic_launcher_foreground),
+            AsyncImage(
+                model = food.imageUrl ?: "",
                 contentDescription = food.name,
                 modifier = Modifier
                     .size(50.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
+                    .clip(RoundedCornerShape(8.dp))
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(text = food.name, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
@@ -55,7 +50,7 @@ fun SelectedFoodSection(
             Spacer(modifier = Modifier.width(8.dp))
             Button(
                 onClick = {},
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) { Text("g") }
             Spacer(modifier = Modifier.width(8.dp))
             OutlinedButton(onClick = {}) { Text("cups") }

@@ -6,6 +6,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
@@ -40,9 +41,14 @@ fun FoodSearchBar(
             onClick = onSearchClick,
             modifier = Modifier
                 .height(inputHeight),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF668405)) // green
         ) {
-            Icon(searchIcon, contentDescription = null)
+            Icon(
+                imageVector = searchIcon,
+                contentDescription = null,
+                tint = Color.White // white icon for contrast
+            )
         }
     }
 }
