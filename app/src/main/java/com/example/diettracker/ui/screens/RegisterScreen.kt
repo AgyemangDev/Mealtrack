@@ -19,9 +19,9 @@ import com.example.diettracker.ui.components.inputs.AppTextField
 import com.example.diettracker.ui.components.buttons.CustomButton
 import com.example.diettracker.ui.navigation.Screen
 import com.example.diettracker.ui.components.dialogs.AppAlertDialog
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import com.example.diettracker.ui.utils.ValidationUtils
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.UserProfileChangeRequest
 
 @Composable
 fun RegisterScreen(navController: NavController) {
@@ -129,21 +129,30 @@ fun RegisterScreen(navController: NavController) {
                                 }
                                 else -> {
                                     isLoading = true
-                                    val encodedFullName =
-                                        URLEncoder.encode(fullName, StandardCharsets.UTF_8.toString())
-                                    val encodedEmail =
-                                        URLEncoder.encode(email, StandardCharsets.UTF_8.toString())
-                                    val encodedPassword =
-                                        URLEncoder.encode(password, StandardCharsets.UTF_8.toString())
-
-                                    navController.navigate(
-                                        Screen.AgeRange.createRoute(
-                                            encodedFullName,
-                                            encodedEmail,
-                                            encodedPassword
-                                        )
-                                    )
-                                    isLoading = false
+                                    FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+                                        .addOnCompleteListener { task ->
+                                            if (task.isSuccessful) {
+                                                val user = FirebaseAuth.getInstance().currentUser
+                                                val profileUpdates = UserProfileChangeRequest.Builder()
+                                                    .setDisplayName(fullName)
+                                                    .build()
+                                                user?.updateProfile(profileUpdates)?.addOnCompleteListener { updateTask ->
+                                                    isLoading = false
+                                                    if (updateTask.isSuccessful) {
+                                                        navController.navigate(Screen.Main.route) {
+                                                            popUpTo(Screen.Register.route) { inclusive = true }
+                                                        }
+                                                    } else {
+                                                        errorMessage = "Failed to save user name."
+                                                        showDialog = true
+                                                    }
+                                                }
+                                            } else {
+                                                isLoading = false
+                                                errorMessage = task.exception?.message ?: "Registration failed"
+                                                showDialog = true
+                                            }
+                                        }
                                 }
                             }
                         }
@@ -177,7 +186,7 @@ fun RegisterScreen(navController: NavController) {
         AppAlertDialog(
             showDialog = showDialog,
             onDismiss = { showDialog = false },
-            title = if (errorMessage.contains("match")) "Password Mismatch" else "Validation Error",
+            title = if (errorMessage.contains("match")) "Password Mismatch" else "Registration Error",
             message = errorMessage
         )
     }

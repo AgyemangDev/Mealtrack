@@ -95,7 +95,7 @@ fun AllFoodsScreen(navController: NavHostController, foodViewModel: FoodViewMode
                 food = it,
                 onDismiss = { showEditDialog = null },
                 onConfirm = { updatedFood ->
-                    foodViewModel.updateFood(it, updatedFood)
+                    foodViewModel.updateFood(updatedFood)
                     showEditDialog = null
                 }
             )

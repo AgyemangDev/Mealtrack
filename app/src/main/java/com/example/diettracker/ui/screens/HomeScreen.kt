@@ -23,6 +23,7 @@ import com.example.diettracker.ui.components.dialogs.MealDialog
 import com.example.diettracker.ui.components.cards.MealInfo
 import com.example.diettracker.ui.components.cards.NutrientsPreviewSection
 import com.example.diettracker.ui.components.cards.TodaysFoodsSection
+import com.google.firebase.auth.FirebaseAuth
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -33,6 +34,9 @@ fun HomeScreen(
 ) {
     var showMealDialog by remember { mutableStateOf(false) }
     var editingMealIndex by remember { mutableStateOf<Int?>(null) }
+
+    val user = FirebaseAuth.getInstance().currentUser
+    val userName = user?.displayName ?: "User"
 
     val totalCalories = meals.sumOf { it.calories }
     val totalProtein = meals.sumOf { it.protein }
@@ -87,7 +91,7 @@ fun HomeScreen(
         // Greeting Card
         GreetingCard(
             greeting = greeting,
-            userName = "John",
+            userName = userName,
             currentDateTime = currentDateTime
         )
 
