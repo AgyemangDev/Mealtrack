@@ -118,7 +118,7 @@ fun AddFoodScreen(navController: NavController? = null) {
                             try {
                                 val response = ApiClient.api.searchRecipes(
                                     query = searchQuery,
-                                    number = 3,
+                                    number = 10,
                                     addNutrition = true,
                                     apiKey = "3a69df17a1e94aae83558dcfd1afef0f"
                                 )
