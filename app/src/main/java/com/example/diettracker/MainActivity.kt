@@ -4,9 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.example.diettracker.ui.theme.DietTrackerTheme
-import com.example.diettracker.ui.navigation.AppNavGraph
+import androidx.navigation.compose.rememberNavController
+import com.example.diettracker.ui.navigation.NavGraph
 
+import com.example.diettracker.ui.theme.DietTrackerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -14,7 +15,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DietTrackerTheme {
-                AppNavGraph()
+                val navController = rememberNavController()
+                NavGraph(navController = navController)
             }
         }
     }

@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,12 +14,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.diettracker.R
+import com.example.diettracker.ui.components.cards.MealInfo
+import com.example.diettracker.ui.components.headers.AppHeader
 
-// Data class for nutrient details
 data class NutrientDetail(
     val name: String,
     val current: Int,
@@ -30,55 +29,54 @@ data class NutrientDetail(
     val imageRes: Int
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AllNutrientsScreen(onBackClick: () -> Unit = {}) {
+fun AllNutrientsScreen(
+    meals: List<MealInfo>,
+    navController: NavController
+) {
+    val totalCalories = meals.sumOf { it.calories }
+    val totalProtein = meals.sumOf { it.protein }
+    val totalCarbs = meals.sumOf { it.carbs }
+    val totalFat = meals.sumOf { it.fat }
+    val totalCalcium = meals.sumOf { it.calcium.toInt() }
+    val totalIron = meals.sumOf { it.iron.toInt() }
+    val totalVitamins = meals.sumOf { it.vitamins.toInt() }
+
     val nutrients = listOf(
-        NutrientDetail("Calories", 1850, 2200, "kcal", R.drawable.ic_launcher_foreground),
-        NutrientDetail("Protein", 120, 150, "g", R.drawable.ic_launcher_foreground),
-        NutrientDetail("Carbs", 180, 250, "g", R.drawable.ic_launcher_foreground),
-        NutrientDetail("Fats", 55, 70, "g", R.drawable.ic_launcher_foreground),
-        NutrientDetail("Calcium", 800, 1000, "mg", R.drawable.ic_launcher_foreground),
-        NutrientDetail("Fiber", 20, 30, "g", R.drawable.ic_launcher_foreground)
+        NutrientDetail("Calories", totalCalories, 2200, "kcal", R.drawable.nuts),
+        NutrientDetail("Protein", totalProtein, 150, "g", R.drawable.protein),
+        NutrientDetail("Carbs", totalCarbs, 250, "g", R.drawable.carbs),
+        NutrientDetail("Fats", totalFat, 70, "g", R.drawable.fats),
+        NutrientDetail("Calcium", totalCalcium, 1000, "mg", R.drawable.calcium),
+        NutrientDetail("Iron", totalIron, 30, "mg", R.drawable.iron),
+        NutrientDetail("Vitamins", totalVitamins, 30, "g", R.drawable.fruitsandveggies)
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "All Nutrients",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
-                )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF5F5F5))
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Sticky header with back button
+            AppHeader(
+                title = "All Nutrients",
+                onBackClick = { navController.popBackStack() }
             )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFF5F5F5))
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            nutrients.forEach { nutrient ->
-                NutrientDetailCard(nutrient = nutrient)
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // Scrollable content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                nutrients.forEach { nutrient ->
+                    NutrientDetailCard(nutrient = nutrient)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
         }
     }
 }
@@ -97,7 +95,6 @@ fun NutrientDetailCard(nutrient: NutrientDetail) {
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Nutrient Image
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -106,21 +103,24 @@ fun NutrientDetailCard(nutrient: NutrientDetail) {
                     .background(Color(0xFFE0E0E0)),
                 contentAlignment = Alignment.Center
             ) {
-
+                Image(
+                    painter = painterResource(id = nutrient.imageRes),
+                    contentDescription = nutrient.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Nutrient Name
             Text(
                 text = nutrient.name,
                 fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
             )
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Current / Goal
             Text(
                 text = "${nutrient.current}${nutrient.unit} / ${nutrient.goal}${nutrient.unit}",
                 fontSize = 16.sp,
@@ -129,7 +129,6 @@ fun NutrientDetailCard(nutrient: NutrientDetail) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Progress Bar
             val progress = nutrient.current.toFloat() / nutrient.goal.toFloat()
             LinearProgressIndicator(
                 progress = { progress.coerceIn(0f, 1f) },
@@ -144,15 +143,15 @@ fun NutrientDetailCard(nutrient: NutrientDetail) {
     }
 }
 
-
 fun getNutrientColor(nutrientName: String): Color {
     return when (nutrientName.lowercase()) {
         "calories" -> Color(0xFFFFA726)
         "protein" -> Color(0xFFEF5350)
-        "carbs" -> Color(0xFFFFEE58)     
-        "fats" -> Color(0xFF66BB6A)      
+        "carbs" -> Color(0xFFFFEE58)
+        "fats" -> Color(0xFF66BB6A)
         "calcium" -> Color(0xFF42A5F5)
-        "fiber" -> Color(0xFFAB47BC)
+        "iron" -> Color(0xFFAB47BC)
+        "vitamins" -> Color(0xFF4CAF50)
         else -> Color(0xFF4CAF50)
     }
 }

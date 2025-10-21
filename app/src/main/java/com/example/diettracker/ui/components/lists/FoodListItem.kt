@@ -3,8 +3,6 @@ package com.example.diettracker.ui.components.lists
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -28,8 +26,7 @@ fun FoodListItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp)
-            .height(90.dp) // slightly taller
+            .height(90.dp)
             .clickable { onFoodSelected(food) },
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -45,22 +42,20 @@ fun FoodListItem(
                 model = food.imageUrl ?: "",
                 contentDescription = food.name,
                 modifier = Modifier
-                    .size(70.dp) // increased size
+                    .size(70.dp)
                     .clip(RoundedCornerShape(10.dp)),
                 contentScale = androidx.compose.ui.layout.ContentScale.Crop
             )
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            Column(
-                modifier = Modifier.weight(1f) // take remaining space
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = food.name,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
-                Spacer(modifier = Modifier.height(6.dp)) // space between title and nutrients
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "${food.calories} kcal • ${food.protein}g P • ${food.carbs}g C • ${food.fats}g F",
                     fontSize = 13.sp,
@@ -74,21 +69,6 @@ fun FoodListItem(
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp)
             )
-        }
-    }
-}
-
-@Composable
-fun FoodList(
-    foods: List<FoodItem>,
-    onFoodSelected: (FoodItem) -> Unit
-) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        items(foods) { food ->
-            FoodListItem(food = food, onFoodSelected = onFoodSelected)
         }
     }
 }
