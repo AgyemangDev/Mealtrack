@@ -20,6 +20,8 @@ import com.example.diettracker.ui.components.headers.AppHeader
 import com.example.diettracker.ui.components.inputs.FoodSearchBar
 import com.example.diettracker.ui.components.lists.FoodListItem
 import com.example.diettracker.ui.components.buttons.CustomButton
+import com.example.diettracker.data.DietRepository
+import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,7 +29,6 @@ fun AddFoodScreen(navController: NavController? = null) {
     var searchQuery by remember { mutableStateOf("") }
     var foodList by remember { mutableStateOf(listOf<FoodItem>()) }
     var selectedFood by remember { mutableStateOf<FoodItem?>(null) }
-    var quantity by remember { mutableStateOf("150") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -48,8 +49,42 @@ fun AddFoodScreen(navController: NavController? = null) {
                 contentAlignment = Alignment.Center
             ) {
                 CustomButton(
-                    text = "Add Food",
-                    onClick = { /* TODO: Integrate Add Food logic */ },
+                    text = if (isLoading) "Adding..." else "Add Food",
+                    onClick = {
+                        scope.launch {
+                            val userId = FirebaseAuth.getInstance().currentUser?.uid
+
+                            if (userId == null) {
+                                errorMessage = "⚠️ You must be signed in to add food."
+                                return@launch
+                            }
+
+                            if (selectedFood == null) {
+                                errorMessage = "⚠️ Please select a food to add."
+                                return@launch
+                            }
+
+                            try {
+                                isLoading = true
+                                errorMessage = null
+
+                                // Add the selected food to Firestore
+                                DietRepository.addFoodForUser(
+                                    userId = userId,
+                                    food = selectedFood!!
+                                )
+
+                                // ✅ Success: show message and deselect
+                                errorMessage = "✅ Food successfully added!"
+                                selectedFood = null // 👈 Deselect automatically
+                            } catch (e: Exception) {
+                                errorMessage = "❌ Failed to add food: ${e.message}"
+                                e.printStackTrace()
+                            } finally {
+                                isLoading = false
+                            }
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -63,17 +98,14 @@ fun AddFoodScreen(navController: NavController? = null) {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 1️⃣ Search bar at top
+            // 🔍 Search bar
             item {
                 FoodSearchBar(
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
                     onSearchClick = {
-                        println("🔍 Search clicked with query: '$searchQuery'")
-
                         if (searchQuery.isBlank()) {
-                            errorMessage = "Please enter a search term"
-                            println("❌ Empty search query")
+                            errorMessage = "⚠️ Please enter a search term."
                             return@FoodSearchBar
                         }
 
@@ -83,39 +115,20 @@ fun AddFoodScreen(navController: NavController? = null) {
                             foodList = emptyList()
 
                             try {
-                                println("📡 Making API call...")
                                 val response = ApiClient.api.searchRecipes(
                                     query = searchQuery,
-                                    number = 6,
+                                    number = 3,
                                     addNutrition = true,
                                     apiKey = "3a69df17a1e94aae83558dcfd1afef0f"
                                 )
 
-                                println("✅ API Response received")
-                                println("📊 Total results: ${response.results.size}")
-
-                                // Log each result
-                                response.results.forEachIndexed { index, result ->
-                                    println("  Item $index: ${result.title}")
-                                }
-
-                                // Convert to FoodItem
-                                foodList = response.results.map {
-                                    val foodItem = it.toFoodItem()
-                                    println("🍎 Converted: ${foodItem.name} - ${foodItem.calories} kcal")
-                                    foodItem
-                                }
-
-                                println("✨ Final foodList size: ${foodList.size}")
+                                foodList = response.results.map { it.toFoodItem() }
 
                                 if (foodList.isEmpty()) {
-                                    errorMessage = "No results found for '$searchQuery'"
-                                    println("⚠️ No results after conversion")
+                                    errorMessage = "⚠️ No results found for '$searchQuery'."
                                 }
-
                             } catch (e: Exception) {
-                                errorMessage = "Error: ${e.message}"
-                                println("❌ Exception occurred: ${e.message}")
+                                errorMessage = "❌ Error: ${e.message}"
                                 e.printStackTrace()
                             } finally {
                                 isLoading = false
@@ -126,7 +139,7 @@ fun AddFoodScreen(navController: NavController? = null) {
                 )
             }
 
-            // 2️⃣ Loading indicator
+            // ⏳ Loading indicator
             if (isLoading) {
                 item {
                     Box(
@@ -140,7 +153,7 @@ fun AddFoodScreen(navController: NavController? = null) {
                 }
             }
 
-            // 3️⃣ Error message
+            // ⚠️ Error or success message
             if (errorMessage != null) {
                 item {
                     Card(
@@ -148,37 +161,26 @@ fun AddFoodScreen(navController: NavController? = null) {
                             .fillMaxWidth()
                             .padding(vertical = 8.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFFFEBEE)
+                            containerColor = if (errorMessage!!.startsWith("✅")) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
                         )
                     ) {
                         Text(
                             text = errorMessage ?: "",
-                            color = Color(0xFFC62828),
+                            color = if (errorMessage!!.startsWith("✅")) Color(0xFF2E7D32) else Color(0xFFC62828),
                             modifier = Modifier.padding(16.dp)
                         )
                     }
                 }
             }
 
-            // 4️⃣ Debug info
-            if (!isLoading) {
-                item {
-                    Text(
-                        text = "Results: ${foodList.size} items",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-            }
-
-            // 5️⃣ Display fetched foods dynamically
+            // 🧾 Search results
             items(foodList) { food ->
-                println("🎨 Rendering FoodListItem: ${food.name}")
-                FoodListItem(food = food, onFoodSelected = { selectedFood = it })
+                FoodListItem(food = food,
+                    isSelected = selectedFood == food,
+                    onFoodSelected = { selectedFood = it })
             }
 
-            // 6️⃣ Spacer so content doesn't clash with bottom button
+            // Extra space for bottom button
             item { Spacer(modifier = Modifier.height(100.dp)) }
         }
     }

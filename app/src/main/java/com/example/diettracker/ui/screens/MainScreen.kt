@@ -1,6 +1,6 @@
 package com.example.diettracker.ui.screens
 
-import HomeScreen
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -40,7 +40,7 @@ fun MainScreen() {
                 // Home Screen
                 composable(BottomNavItem.Home.route) {
                     HomeScreen(
-                        meals = meals,
+
                         userViewModel = userViewModel,
                         onNavigateToAllNutrients = {
                             navController.navigate(BottomNavItem.Nutrients.route)

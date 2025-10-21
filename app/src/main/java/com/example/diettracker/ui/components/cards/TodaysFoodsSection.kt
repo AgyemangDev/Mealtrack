@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.diettracker.models.FoodItem
 
 data class MealInfo(
     val name: String,
@@ -28,7 +29,7 @@ data class MealInfo(
 
 @Composable
 fun TodaysFoodsSection(
-    meals: List<MealInfo>,
+    meals: List<FoodItem>,  // Use FoodItem
     onEditMeal: (Int) -> Unit,
     onDeleteMeal: (Int) -> Unit,
     modifier: Modifier = Modifier
@@ -68,7 +69,7 @@ fun TodaysFoodsSection(
             ) {
                 meals.forEachIndexed { index, meal ->
                     MealCard(
-                        meal = meal,
+                        food = meal,  // Use FoodItem
                         onEdit = { onEditMeal(index) },
                         onDelete = { onDeleteMeal(index) }
                     )

@@ -18,11 +18,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.diettracker.models.FoodItem
 
 
 @Composable
 fun MealCard(
-    meal: MealInfo,
+    food: FoodItem, // <- use FoodItem instead of MealInfo
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
@@ -39,12 +40,13 @@ fun MealCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = meal.name,
+                        text = food.name,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
+                    // Optional: if you track servings in FoodItem
                     Text(
-                        text = "${meal.servings} serving",
+                        text = "1 serving",
                         fontSize = 14.sp,
                         color = Color.Gray,
                         modifier = Modifier.padding(top = 4.dp)
@@ -76,24 +78,24 @@ fun MealCard(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Cal: ${meal.calories}",
+                    text = "Cal: ${food.calories}",
                     fontSize = 14.sp,
                     color = Color.DarkGray
                 )
                 Text(
-                    text = "P: ${meal.protein}g",
+                    text = "P: ${food.protein}g",
                     fontSize = 14.sp,
                     color = Color.DarkGray
                 )
                 Text(
-                    text = "C: ${meal.carbs}g",
+                    text = "C: ${food.carbs}g",
                     fontSize = 14.sp,
                     color = Color.DarkGray
                 )
             }
 
             Text(
-                text = "F: ${meal.fat}g",
+                text = "F: ${food.fats}g",
                 fontSize = 14.sp,
                 color = Color.DarkGray,
                 modifier = Modifier.padding(top = 4.dp)
