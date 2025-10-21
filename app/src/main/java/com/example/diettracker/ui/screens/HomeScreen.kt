@@ -19,7 +19,6 @@ import com.example.diettracker.models.FoodItem
 import com.example.diettracker.models.UserViewModel
 import com.example.diettracker.ui.components.buttons.AddMealFab
 import com.example.diettracker.ui.components.cards.*
-import com.example.diettracker.ui.components.dialogs.MealDialog
 import com.example.diettracker.ui.components.headers.AppHeader
 import java.text.SimpleDateFormat
 import java.util.*

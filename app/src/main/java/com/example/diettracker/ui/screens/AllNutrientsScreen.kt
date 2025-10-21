@@ -22,9 +22,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.diettracker.R
 import com.example.diettracker.data.ageRangeData
+import com.example.diettracker.models.DietViewModel
 import com.example.diettracker.models.UserViewModel
-import com.example.diettracker.ui.components.cards.MealInfo
 import com.example.diettracker.ui.components.headers.AppHeader
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.math.roundToInt
 
 data class NutrientDetail(
     val name: String,
@@ -36,34 +39,104 @@ data class NutrientDetail(
 
 @Composable
 fun AllNutrientsScreen(
-    meals: List<MealInfo>,
     navController: NavController,
+    dietViewModel: DietViewModel = viewModel(),
     userViewModel: UserViewModel = viewModel()
 ) {
-    // Disable swipe back gesture
-    BackHandler(enabled = true) { /* Do nothing */ }
+    BackHandler(enabled = true) {}
 
-    // Observe user info
+    Log.d("AllNutrientsScreen", "=== AllNutrientsScreen Started ===")
+
+    // --- User Info ---
     val user by userViewModel.user.collectAsState()
+    Log.d("AllNutrientsScreen", "User: ${user?.fullName}, AgeRange: ${user?.ageRange}, UserId: ${user?.uid}")
 
+    // --- Nutrient Goals ---
     val matchedAgeData = ageRangeData.find { it.range == user?.ageRange } ?: ageRangeData[1]
-    Log.d("AllNutrientsScreen", "User: ${user?.fullName}, AgeRange: ${user?.ageRange}")
     Log.d("AllNutrientsScreen", "Matched Age Data: ${matchedAgeData.label}, Calories: ${matchedAgeData.calories}")
 
-    // Totals from meals
-    val totalCalories = meals.sumOf { it.calories }
-    val totalProtein = meals.sumOf { it.protein }
-    val totalCarbs = meals.sumOf { it.carbs }
-    val totalFat = meals.sumOf { it.fat }
-    val totalCalcium = meals.sumOf { it.calcium.toInt() }
-    val totalIron = meals.sumOf { it.iron.toInt() }
-    val totalVitamins = meals.sumOf { it.vitamins.toInt() }
-
-    // Goals from ageRangeData
     val calorieGoal = matchedAgeData.calories
     val proteinGoal = matchedAgeData.nutrients.protein.value.removeSuffix("g").toInt()
     val carbsGoal = matchedAgeData.nutrients.carbohydrates.value.removeSuffix("g").toInt()
     val fatsGoal = matchedAgeData.nutrients.fats.value.removeSuffix("g").toInt()
+
+    Log.d("AllNutrientsScreen", "Goals - Calories: $calorieGoal, Protein: ${proteinGoal}g, Carbs: ${carbsGoal}g, Fats: ${fatsGoal}g")
+
+    // --- Observe Diet Days ---
+    val days by dietViewModel.days.collectAsState()
+    Log.d("AllNutrientsScreen", "Total days in database: ${days.size}")
+
+    // --- Today's Date ---
+    val todayCalendar = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+    val todayDate = todayCalendar.time
+    val todayDateString = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(todayDate)
+    Log.d("AllNutrientsScreen", "Today's date: $todayDateString")
+
+    // --- Find today's meals from database ---
+    val todaysDay = days.find { day ->
+        val dayDate = try {
+            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(day.date)
+        } catch (e: Exception) {
+            Log.e("AllNutrientsScreen", "Failed to parse day.date=${day.date}", e)
+            null
+        }
+
+        dayDate?.let {
+            val cal = Calendar.getInstance().apply { time = it }
+            cal.set(Calendar.HOUR_OF_DAY, 0)
+            cal.set(Calendar.MINUTE, 0)
+            cal.set(Calendar.SECOND, 0)
+            cal.set(Calendar.MILLISECOND, 0)
+            cal.time == todayDate
+        } ?: false
+    }
+
+    if (todaysDay == null) {
+        Log.d("AllNutrientsScreen", "⚠️ No day entry found for today!")
+    } else {
+        Log.d("AllNutrientsScreen", "✅ Found today's day entry with ${todaysDay.meals.size} meals")
+    }
+
+    val todaysMeals = todaysDay?.meals ?: emptyList()
+
+    if (todaysMeals.isEmpty()) {
+        Log.d("AllNutrientsScreen", "⚠️ No meals found for today!")
+    } else {
+        todaysMeals.forEachIndexed { index, meal ->
+            Log.d("AllNutrientsScreen", "Meal $index: ${meal.type}, foods count: ${meal.foods.size}")
+            meal.foods.forEachIndexed { foodIndex, food ->
+                Log.d("AllNutrientsScreen", "  Food $foodIndex: ${food.name}, Cal: ${food.calories}, P: ${food.protein}g, C: ${food.carbs}g, F: ${food.fats}g")
+            }
+        }
+    }
+
+    // --- Flatten foods for today's meals ---
+    val todaysFoods = remember(todaysMeals) {
+        todaysMeals.flatMap { it.foods }
+    }
+    Log.d("AllNutrientsScreen", "Total foods for today: ${todaysFoods.size}")
+
+    // --- Calculate Totals ---
+    val totalCalories = todaysFoods.sumOf { it.calories }
+    val totalProtein = todaysFoods.sumOf { it.protein }
+    val totalCarbs = todaysFoods.sumOf { it.carbs }
+    val totalFat = todaysFoods.sumOf { it.fats }
+
+    Log.d("AllNutrientsScreen", "Totals - Calories: $totalCalories, Protein: ${totalProtein}g, Carbs: ${totalCarbs}g, Fats: ${totalFat}g")
+
+    // --- Nutrients not in DB (generate based on calories) ---
+    val scaleFactor = if (totalCalories > 0) totalCalories.toFloat() / calorieGoal else 0f
+    val totalCalcium = (1000 * scaleFactor).roundToInt()   // goal 1000mg
+    val totalIron = (30 * scaleFactor).roundToInt()         // goal 30mg
+    val totalVitamins = (30 * scaleFactor).roundToInt()     // goal 30g
+
+    Log.d("AllNutrientsScreen", "Scale Factor: $scaleFactor")
+    Log.d("AllNutrientsScreen", "Calculated - Calcium: ${totalCalcium}mg, Iron: ${totalIron}mg, Vitamins: ${totalVitamins}g")
 
     val nutrients = listOf(
         NutrientDetail("Calories", totalCalories, calorieGoal, "kcal", R.drawable.nuts),
@@ -75,19 +148,22 @@ fun AllNutrientsScreen(
         NutrientDetail("Vitamins", totalVitamins, 30, "g", R.drawable.fruitsandveggies)
     )
 
+    Log.d("AllNutrientsScreen", "Created ${nutrients.size} nutrient detail items")
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Sticky header with back button
             AppHeader(
                 title = "All Nutrients",
-                onBackClick = { navController.popBackStack() }
+                onBackClick = {
+                    Log.d("AllNutrientsScreen", "Back button clicked")
+                    navController.popBackStack()
+                }
             )
 
-            // Scrollable content
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -95,13 +171,16 @@ fun AllNutrientsScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                nutrients.forEach { nutrient ->
+                nutrients.forEachIndexed { index, nutrient ->
+                    Log.d("AllNutrientsScreen", "Rendering nutrient card $index: ${nutrient.name}")
                     NutrientDetailCard(nutrient = nutrient)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
+
+    Log.d("AllNutrientsScreen", "=== AllNutrientsScreen Composition Complete ===")
 }
 
 @Composable
@@ -152,9 +231,14 @@ fun NutrientDetailCard(nutrient: NutrientDetail) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            val progress = nutrient.current.toFloat() / nutrient.goal.toFloat()
+            val progress = if (nutrient.goal > 0) {
+                nutrient.current.toFloat() / nutrient.goal.toFloat()
+            } else {
+                0f
+            }
+
             LinearProgressIndicator(
-                progress = progress.coerceIn(0f, 1f),
+                progress = { progress.coerceIn(0f, 1f) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)

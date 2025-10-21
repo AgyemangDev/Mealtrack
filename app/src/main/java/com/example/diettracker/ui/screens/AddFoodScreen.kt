@@ -1,5 +1,6 @@
 package com.example.diettracker.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,10 +11,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import com.example.diettracker.Interfaces.ApiClient
+import com.example.diettracker.R
 import com.example.diettracker.models.FoodItem
 import com.example.diettracker.models.toFoodItem
 import com.example.diettracker.ui.components.headers.AppHeader
@@ -68,15 +71,13 @@ fun AddFoodScreen(navController: NavController? = null) {
                                 isLoading = true
                                 errorMessage = null
 
-                                // Add the selected food to Firestore
                                 DietRepository.addFoodForUser(
                                     userId = userId,
                                     food = selectedFood!!
                                 )
 
-                                // ✅ Success: show message and deselect
                                 errorMessage = "✅ Food successfully added!"
-                                selectedFood = null // 👈 Deselect automatically
+                                selectedFood = null
                             } catch (e: Exception) {
                                 errorMessage = "❌ Failed to add food: ${e.message}"
                                 e.printStackTrace()
@@ -173,15 +174,52 @@ fun AddFoodScreen(navController: NavController? = null) {
                 }
             }
 
-            // 🧾 Search results
-            items(foodList) { food ->
-                FoodListItem(food = food,
-                    isSelected = selectedFood == food,
-                    onFoodSelected = { selectedFood = it })
+            // 🧾 Search results or placeholder
+            if (foodList.isEmpty() && !isLoading) {
+                item { NoFoodPlaceholder() }
+            } else {
+                items(foodList) { food ->
+                    FoodListItem(
+                        food = food,
+                        isSelected = selectedFood == food,
+                        onFoodSelected = { selectedFood = it }
+                    )
+                }
             }
 
             // Extra space for bottom button
             item { Spacer(modifier = Modifier.height(100.dp)) }
+        }
+    }
+}
+
+@Composable
+fun NoFoodPlaceholder() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight()  // take all available vertical space
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.TopCenter // start from top and move down manually
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(top = 120.dp), // push it down from the top
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.eat),
+                contentDescription = "Empty plate",
+                modifier = Modifier
+                    .size(200.dp) // increased size
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "What are you eating today?",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.Gray
+            )
         }
     }
 }
