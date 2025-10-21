@@ -77,7 +77,7 @@ fun AllNutrientsScreen(
     val todayDateString = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(todayDate)
     Log.d("AllNutrientsScreen", "Today's date: $todayDateString")
 
-    // --- Find today's meals from database ---
+    // Find  meals from database
     val todaysDay = days.find { day ->
         val dayDate = try {
             SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(day.date)
@@ -115,7 +115,7 @@ fun AllNutrientsScreen(
         }
     }
 
-    // --- Flatten foods for today's meals ---
+    //
     val todaysFoods = remember(todaysMeals) {
         todaysMeals.flatMap { it.foods }
     }
@@ -129,11 +129,11 @@ fun AllNutrientsScreen(
 
     Log.d("AllNutrientsScreen", "Totals - Calories: $totalCalories, Protein: ${totalProtein}g, Carbs: ${totalCarbs}g, Fats: ${totalFat}g")
 
-    // --- Nutrients not in DB (generate based on calories) ---
+    // Nutrients not in DB (generate based on calories)
     val scaleFactor = if (totalCalories > 0) totalCalories.toFloat() / calorieGoal else 0f
-    val totalCalcium = (1000 * scaleFactor).roundToInt()   // goal 1000mg
-    val totalIron = (30 * scaleFactor).roundToInt()         // goal 30mg
-    val totalVitamins = (30 * scaleFactor).roundToInt()     // goal 30g
+    val totalCalcium = (1000 * scaleFactor).roundToInt()
+    val totalIron = (30 * scaleFactor).roundToInt()
+    val totalVitamins = (30 * scaleFactor).roundToInt()
 
     Log.d("AllNutrientsScreen", "Scale Factor: $scaleFactor")
     Log.d("AllNutrientsScreen", "Calculated - Calcium: ${totalCalcium}mg, Iron: ${totalIron}mg, Vitamins: ${totalVitamins}g")

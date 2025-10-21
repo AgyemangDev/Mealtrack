@@ -14,12 +14,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.diettracker.data.ageRangeData
+import com.example.diettracker.data.DietRepository
 import com.example.diettracker.models.DietViewModel
 import com.example.diettracker.models.FoodItem
 import com.example.diettracker.models.UserViewModel
 import com.example.diettracker.ui.components.buttons.AddMealFab
 import com.example.diettracker.ui.components.cards.*
+import com.example.diettracker.ui.components.dialogs.MealDialog
 import com.example.diettracker.ui.components.headers.AppHeader
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -32,73 +36,36 @@ fun HomeScreen(
 ) {
     BackHandler(enabled = true) {}
 
-    // --- User Info ---
+    val auth = remember { FirebaseAuth.getInstance() }
+    val userId = auth.currentUser?.uid
+
     val user by userViewModel.user.collectAsState()
     val userFirstName =
         user?.fullName?.split(" ")?.firstOrNull()?.replaceFirstChar { it.uppercase() } ?: "User"
 
-    // --- Nutrient Goals ---
     val matchedAgeData = ageRangeData.find { it.range == user?.ageRange } ?: ageRangeData[1]
     val calorieGoal = matchedAgeData.calories
     val proteinGoal = matchedAgeData.nutrients.protein.value.removeSuffix("g").toInt()
     val carbsGoal = matchedAgeData.nutrients.carbohydrates.value.removeSuffix("g").toInt()
     val fatsGoal = matchedAgeData.nutrients.fats.value.removeSuffix("g").toInt()
 
-    // --- Observe Diet Days ---
+    val todayDateString = remember {
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    }
+
+    // Get meals from DietViewModel which loads from DietRepository
     val days by dietViewModel.days.collectAsState()
 
-    // --- Today's Date ---
-    val todayCalendar = Calendar.getInstance().apply {
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
-    val todayDate = todayCalendar.time
-
-    // --- Find today's meals from database ---
-    val todaysDay = days.find { day ->
-        val dayDate = try {
-            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(day.date)
-        } catch (e: Exception) {
-            Log.e("HomeScreen", "Failed to parse day.date=${day.date}", e)
-            null
-        }
-
-        dayDate?.let {
-            val cal = Calendar.getInstance().apply { time = it }
-            cal.set(Calendar.HOUR_OF_DAY, 0)
-            cal.set(Calendar.MINUTE, 0)
-            cal.set(Calendar.SECOND, 0)
-            cal.set(Calendar.MILLISECOND, 0)
-            cal.time == todayDate
-        } ?: false
+    val todaysFoods = remember(days) {
+        val todaysDay = days.find { it.date == todayDateString }
+        todaysDay?.meals?.flatMap { it.foods } ?: emptyList()
     }
 
-    val todaysMeals = todaysDay?.meals ?: emptyList()
-
-    if (todaysMeals.isEmpty()) Log.d("HomeScreen", "⚠️ No meals found for today!")
-    else {
-        todaysMeals.forEach { meal ->
-            Log.d("HomeScreen", "Meal: ${meal.type}, foods: ${meal.foods}")
-        }
-    }
-
-    // --- Flatten foods for today's meals ---
-    val todaysFoods = remember { mutableStateListOf<FoodItem>() }
-    LaunchedEffect(todaysMeals) {
-        todaysFoods.clear()
-        todaysFoods.addAll(todaysMeals.flatMap { it.foods })
-        Log.d("HomeScreen", "Total foods for today: ${todaysFoods.size}")
-    }
-
-    // --- Totals ---
     val totalCalories by derivedStateOf { todaysFoods.sumOf { it.calories } }
     val totalProtein by derivedStateOf { todaysFoods.sumOf { it.protein } }
     val totalCarbs by derivedStateOf { todaysFoods.sumOf { it.carbs } }
     val totalFats by derivedStateOf { todaysFoods.sumOf { it.fats } }
 
-    // --- Greeting & Time ---
     val currentDateTime = remember {
         val cal = Calendar.getInstance()
         val dateFormat = SimpleDateFormat("EEEE, MMM dd", Locale.getDefault())
@@ -117,9 +84,9 @@ fun HomeScreen(
         }
     }
 
-    // --- Meal Dialog State ---
     var showMealDialog by remember { mutableStateOf(false) }
     var editingFoodIndex by remember { mutableStateOf<Int?>(null) }
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -156,14 +123,26 @@ fun HomeScreen(
                 )
 
                 TodaysFoodsSection(
-                    meals = todaysFoods, // FoodItem list
+                    meals = todaysFoods,
                     onEditMeal = { index ->
                         editingFoodIndex = index
                         showMealDialog = true
                     },
                     onDeleteMeal = { index ->
-                        Log.d("HomeScreen", "Deleting food at index $index: ${todaysFoods[index]}")
-                        todaysFoods.removeAt(index)
+                        if (userId != null) {
+                            val foodToDelete = todaysFoods[index]
+                            Log.d("HomeScreen", "Deleting food: ${foodToDelete.name}")
+
+                            scope.launch {
+                                try {
+                                    DietRepository.deleteFoodForUser(userId, foodToDelete)
+
+                                    Log.d("HomeScreen", "Successfully deleted from Firebase")
+                                } catch (e: Exception) {
+                                    Log.e("HomeScreen", "Error deleting from Firebase", e)
+                                }
+                            }
+                        }
                     }
                 )
 
@@ -177,5 +156,60 @@ fun HomeScreen(
         })
     }
 
-    // --- Meal Dialog ---
+    if (showMealDialog) {
+        val editingMeal = editingFoodIndex?.let { index ->
+            val food = todaysFoods[index]
+            MealInfo(
+                name = food.name,
+                servings = 1,
+                calories = food.calories,
+                protein = food.protein,
+                carbs = food.carbs,
+                fat = food.fats,
+                iron = 0.0,
+                calcium = 0.0,
+                vitamins = 0.0
+            )
+        }
+
+        MealDialog(
+            meal = editingMeal,
+            onDismiss = {
+                showMealDialog = false
+                editingFoodIndex = null
+            },
+            onSave = { mealInfo ->
+                if (userId != null) {
+                    val newFood = FoodItem(
+                        name = mealInfo.name,
+                        calories = mealInfo.calories,
+                        protein = mealInfo.protein,
+                        carbs = mealInfo.carbs,
+                        fats = mealInfo.fat
+                    )
+
+                    scope.launch {
+                        try {
+                            if (editingFoodIndex != null) {
+                                // Delete old food
+                                val oldFood = todaysFoods[editingFoodIndex!!]
+                                DietRepository.deleteFoodForUser(userId, oldFood)
+                            }
+
+                            // Add new/updated food
+                            DietRepository.addFoodForUser(userId, newFood)
+
+
+                            Log.d("HomeScreen", "Successfully saved to Firebase")
+                        } catch (e: Exception) {
+                            Log.e("HomeScreen", "Error saving to Firebase", e)
+                        }
+                    }
+
+                    showMealDialog = false
+                    editingFoodIndex = null
+                }
+            }
+        )
+    }
 }

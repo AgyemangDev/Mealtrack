@@ -63,7 +63,7 @@ fun AllFoodsScreen(
                             FoodItemCard(
                                 food = food,
 
-                                onDelete = { /* Optional: implement deleting */ }
+                                onDelete = { }
                             )
                         }
                     }

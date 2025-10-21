@@ -198,13 +198,13 @@ fun NoFoodPlaceholder() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight()  // take all available vertical space
+            .fillMaxHeight()
             .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.TopCenter // start from top and move down manually
+        contentAlignment = Alignment.TopCenter
     ) {
         Column(
             modifier = Modifier
-                .padding(top = 120.dp), // push it down from the top
+                .padding(top = 120.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -212,7 +212,7 @@ fun NoFoodPlaceholder() {
                 painter = painterResource(id = R.drawable.eat),
                 contentDescription = "Empty plate",
                 modifier = Modifier
-                    .size(200.dp) // increased size
+                    .size(200.dp)
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
