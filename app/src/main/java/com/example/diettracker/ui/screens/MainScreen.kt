@@ -18,66 +18,55 @@ import com.example.diettracker.ui.navigation.BottomNavBar
 import com.example.diettracker.ui.navigation.BottomNavItem
 
 @Composable
-fun MainScreen(navController: NavController) {
-    val navController = rememberNavController()
-
+fun MainScreen(rootNavController: NavController) {
     Log.d("MainScreen", "=== MainScreen Initialized ===")
 
-    // ✅ Create shared ViewModels at the MainScreen level
+    // ✅ Local navController for bottom navigation
+    val bottomNavController = rememberNavController()
+
     val userViewModel: UserViewModel = viewModel()
     val dietViewModel: DietViewModel = viewModel()
 
-    Log.d("MainScreen", "ViewModels created - UserViewModel: $userViewModel, DietViewModel: $dietViewModel")
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        bottomBar = { BottomNavBar(navController = navController) }
+        bottomBar = { BottomNavBar(navController = bottomNavController) }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
             NavHost(
-                navController = navController,
+                navController = bottomNavController,
                 startDestination = BottomNavItem.Home.route
             ) {
-                // Home Screen
                 composable(BottomNavItem.Home.route) {
-                    Log.d("MainScreen", "Navigating to Home Screen")
                     HomeScreen(
                         dietViewModel = dietViewModel,
                         userViewModel = userViewModel,
                         onNavigateToAllNutrients = {
-                            Log.d("MainScreen", "Navigating to All Nutrients Screen")
-                            navController.navigate(BottomNavItem.Nutrients.route)
+                            bottomNavController.navigate(BottomNavItem.Nutrients.route)
                         }
                     )
                 }
 
-                // Nutrients Screen - ✅ Removed meals parameter, pass ViewModels
                 composable(BottomNavItem.Nutrients.route) {
-                    Log.d("MainScreen", "Navigating to All Nutrients Screen")
                     AllNutrientsScreen(
-                        navController = navController,
+                        navController = bottomNavController,
                         dietViewModel = dietViewModel,
                         userViewModel = userViewModel
                     )
                 }
 
-                // Foods Screen
                 composable(BottomNavItem.Foods.route) {
-                    Log.d("MainScreen", "Navigating to All Foods Screen")
-                    AllFoodsScreen(navController)
+                    AllFoodsScreen(bottomNavController)
                 }
 
-                // Add Food Screen
                 composable(BottomNavItem.AddFood.route) {
-                    Log.d("MainScreen", "Navigating to Add Food Screen")
-                    AddFoodScreen(navController)
+                    AddFoodScreen(bottomNavController)
                 }
 
-                // Profile / Settings Screen
                 composable(BottomNavItem.Profile.route) {
-                    Log.d("MainScreen", "Navigating to Settings Screen")
-                    SettingScreen(navController = navController)
-
+                    SettingScreen(
+                        navController = rootNavController, // 👈 Important: Use ROOT navController for logout
+                        userViewModel = userViewModel
+                    )
                 }
             }
         }

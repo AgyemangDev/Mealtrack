@@ -91,17 +91,17 @@ fun SettingScreen(
             }
         )
     }
-
     if (showLogoutDialog) {
         LogoutDialog(
             onDismiss = { showLogoutDialog = false },
             onLogoutComplete = {
                 showLogoutDialog = false
                 navController.navigate(Screen.Welcome.route) {
-
-                    popUpTo(0) { inclusive = true } // clears the stack
+                    popUpTo(Screen.Main.route) { inclusive = true }
+                    launchSingleTop = true
                 }
             }
         )
     }
+
 }
