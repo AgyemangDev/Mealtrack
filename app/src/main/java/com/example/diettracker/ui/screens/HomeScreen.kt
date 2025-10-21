@@ -1,3 +1,4 @@
+
 package com.example.diettracker.ui.screens
 
 import androidx.compose.foundation.background
@@ -5,17 +6,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.diettracker.data.UserPreferencesManager
 import com.example.diettracker.ui.components.buttons.AddMealFab
 import com.example.diettracker.ui.components.cards.CalorieProgressCard
 import com.example.diettracker.ui.components.cards.GreetingCard
@@ -23,7 +22,6 @@ import com.example.diettracker.ui.components.dialogs.MealDialog
 import com.example.diettracker.ui.components.cards.MealInfo
 import com.example.diettracker.ui.components.cards.NutrientsPreviewSection
 import com.example.diettracker.ui.components.cards.TodaysFoodsSection
-import com.google.firebase.auth.FirebaseAuth
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -32,11 +30,12 @@ fun HomeScreen(
     meals: MutableList<MealInfo>,
     onNavigateToAllNutrients: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val userPreferences = remember { UserPreferencesManager(context) }
+    val userName by userPreferences.userName.collectAsState(initial = "User")
+
     var showMealDialog by remember { mutableStateOf(false) }
     var editingMealIndex by remember { mutableStateOf<Int?>(null) }
-
-    val user = FirebaseAuth.getInstance().currentUser
-    val userName = user?.displayName ?: "User"
 
     val totalCalories = meals.sumOf { it.calories }
     val totalProtein = meals.sumOf { it.protein }

@@ -40,15 +40,19 @@ fun AllNutrientsScreen(
     val totalProtein = meals.sumOf { it.protein }
     val totalCarbs = meals.sumOf { it.carbs }
     val totalFat = meals.sumOf { it.fat }
+    val totalCalcium = meals.sumOf { it.fat }
+    val totalIron = meals.sumOf { it.fat }
+    val totalVitamins = meals.sumOf { it.fat }
+
 
     val nutrients = listOf(
         NutrientDetail("Calories", totalCalories, 2200, "kcal", R.drawable.nuts),
         NutrientDetail("Protein", totalProtein, 150, "g", R.drawable.protein),
         NutrientDetail("Carbs", totalCarbs, 250, "g", R.drawable.carbs),
         NutrientDetail("Fats", totalFat, 70, "g", R.drawable.fats),
-        NutrientDetail("Calcium", 0, 1000, "mg", R.drawable.calcium),
-        NutrientDetail("Iron", 0, 30, "mg", R.drawable.iron),
-        NutrientDetail("Vitamins", 0, 30, "g", R.drawable.fruitsandveggies)
+        NutrientDetail("Calcium", totalCalcium, 1000, "mg", R.drawable.calcium),
+        NutrientDetail("Iron", totalIron, 30, "mg", R.drawable.iron),
+        NutrientDetail("Vitamins", totalVitamins, 30, "g", R.drawable.fruitsandveggies)
     )
 
     Scaffold(

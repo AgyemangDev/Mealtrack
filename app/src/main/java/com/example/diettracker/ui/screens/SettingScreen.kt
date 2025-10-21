@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -16,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,7 +26,10 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingScreen(settingsViewModel: SettingsViewModel = viewModel()) {
+fun SettingScreen(
+    settingsViewModel: SettingsViewModel = viewModel(),
+    onLogoutComplete: () -> Unit = {}
+) {
     val userName by settingsViewModel.userName.collectAsState()
     val userEmail by settingsViewModel.userEmail.collectAsState()
     val calorieGoal by settingsViewModel.calorieGoal.collectAsState()
@@ -39,8 +44,6 @@ fun SettingScreen(settingsViewModel: SettingsViewModel = viewModel()) {
     var showEditProfileDialog by remember { mutableStateOf(false) }
     var showGoalsDialog by remember { mutableStateOf(false) }
     var showWeightGoalDialog by remember { mutableStateOf(false) }
-    var showUnitsDialog by remember { mutableStateOf(false) }
-    var showClearDataDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -84,25 +87,16 @@ fun SettingScreen(settingsViewModel: SettingsViewModel = viewModel()) {
             Spacer(modifier = Modifier.height(16.dp))
 
             SettingsSection(title = "Preferences") {
-                SettingsSwitchItem(
-                    icon = Icons.Default.DateRange,
-                    title = "Dark Mode",
-                    subtitle = "Enable dark theme",
-                    checked = darkModeEnabled,
-                    onCheckedChange = { settingsViewModel.setDarkMode(it) }
-                )
-                SettingsSwitchItem(
-                    icon = Icons.Default.Notifications,
-                    title = "Notifications",
-                    subtitle = "Meal reminders and updates",
-                    checked = notificationsEnabled,
-                    onCheckedChange = { settingsViewModel.setNotifications(it) }
-                )
+
                 SettingsItem(
-                    icon = Icons.Default.Settings,
-                    title = "Units",
+                    icon = Icons.Default.Speed,
+                    title = "Unit System",
                     subtitle = unitSystem,
-                    onClick = { showUnitsDialog = true }
+                    onClick = {
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Unit system preferences coming soon")
+                        }
+                    }
                 )
             }
 
@@ -115,49 +109,90 @@ fun SettingScreen(settingsViewModel: SettingsViewModel = viewModel()) {
     }
 
     if (showEditProfileDialog) {
-        EditProfileDialog(currentName = userName, currentEmail = userEmail, onDismiss = { showEditProfileDialog = false }) { name, email ->
-            settingsViewModel.updateProfile(name, email)
+        EditProfileDialog(
+            currentName = userName,
+            onDismiss = { showEditProfileDialog = false }
+        ) { name ->
+            settingsViewModel.updateProfile(name, userEmail)
             showEditProfileDialog = false
         }
     }
 
     if (showGoalsDialog) {
-        GoalsDialog(currentCalories = calorieGoal, currentProtein = proteinGoal, currentCarbs = carbsGoal, currentFat = fatGoal, onDismiss = { showGoalsDialog = false }) { c, p, carbs, f ->
+        GoalsDialog(
+            currentCalories = calorieGoal,
+            currentProtein = proteinGoal,
+            currentCarbs = carbsGoal,
+            currentFat = fatGoal,
+            onDismiss = { showGoalsDialog = false }
+        ) { c, p, carbs, f ->
             settingsViewModel.updateNutritionGoals(c, p, carbs, f)
             showGoalsDialog = false
         }
     }
 
     if (showWeightGoalDialog) {
-        WeightGoalDialog(currentWeight = weightGoal, onDismiss = { showWeightGoalDialog = false }) { weight ->
+        WeightGoalDialog(
+            currentWeight = weightGoal,
+            onDismiss = { showWeightGoalDialog = false }
+        ) { weight ->
             settingsViewModel.setWeightGoal(weight)
             showWeightGoalDialog = false
         }
     }
 
-    if (showUnitsDialog) {
-        UnitsDialog(currentUnit = unitSystem, onDismiss = { showUnitsDialog = false }) { unit ->
-            settingsViewModel.setUnitSystem(unit)
-            showUnitsDialog = false
-        }
-    }
-
+    // Logout confirmation dialog
     if (showLogoutDialog) {
+        val isLoggingOut by settingsViewModel.isLoggingOut.collectAsState()
+
         AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
+            onDismissRequest = { if (!isLoggingOut) showLogoutDialog = false },
             title = { Text("Logout") },
-            text = { Text("Are you sure you want to log out?") },
-            confirmButton = {
-                Button(onClick = {
-                    settingsViewModel.logout()
-                    showLogoutDialog = false
-                }) { Text("Logout") }
+            text = {
+                if (isLoggingOut) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text("Logging out...")
+                    }
+                } else {
+                    Text("Are you sure you want to log out?")
+                }
             },
-            dismissButton = { Button(onClick = { showLogoutDialog = false }) { Text("Cancel") } }
+            confirmButton = {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            try {
+                                settingsViewModel.logoutSuspend()
+                                showLogoutDialog = false
+                                onLogoutComplete()
+                            } catch (e: Exception) {
+                                snackbarHostState.showSnackbar("Logout failed: ${e.message}")
+                                showLogoutDialog = false
+                            }
+                        }
+                    },
+                    enabled = !isLoggingOut,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text("Logout")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showLogoutDialog = false },
+                    enabled = !isLoggingOut
+                ) {
+                    Text("Cancel")
+                }
+            }
         )
     }
 }
-
 
 @Composable
 fun ProfileCard(userName: String, userEmail: String, onEditClick: () -> Unit) {
@@ -167,20 +202,34 @@ fun ProfileCard(userName: String, userEmail: String, onEditClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
-                modifier = Modifier.size(100.dp).clip(CircleShape).background(Color(0xFF668405)),
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF668405)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = userName.split(" ").take(2).mapNotNull { it.firstOrNull()?.uppercaseChar() }.joinToString(""),
-                    fontSize = 36.sp, fontWeight = FontWeight.Bold, color = Color.White
+                    text = userName.split(" ").take(2)
+                        .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                        .joinToString(""),
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text(text = userName, fontSize = 24.sp, fontWeight = FontWeight.Bold)
             Text(text = userEmail, fontSize = 14.sp, color = Color.Gray)
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onEditClick, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF668405))) {
-                Icon(imageVector = Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+            Button(
+                onClick = onEditClick,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF668405))
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Edit Profile")
             }
@@ -191,37 +240,85 @@ fun ProfileCard(userName: String, userEmail: String, onEditClick: () -> Unit) {
 @Composable
 fun SettingsSection(title: String, content: @Composable ColumnScope.() -> Unit) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        Text(text = title, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp))
-        Surface(modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium, color = Color.White) {
+        Text(
+            text = title,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
+            color = Color.White
+        ) {
             Column { content() }
         }
     }
 }
 
 @Composable
-fun SettingsItem(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit, textColor: Color = Color.Unspecified) {
+fun SettingsItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    textColor: Color = Color.Unspecified
+) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+        )
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, fontWeight = FontWeight.Medium, color = textColor)
-            Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
         }
-        Icon(imageVector = Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = Color.Gray
+        )
     }
 }
 
 @Composable
-fun SettingsSwitchItem(icon: ImageVector, title: String, subtitle: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+fun SettingsSwitchItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary
+        )
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, fontWeight = FontWeight.Medium)
-            Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
         }
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
@@ -230,15 +327,25 @@ fun SettingsSwitchItem(icon: ImageVector, title: String, subtitle: String, check
 @Composable
 fun LogoutButton(onLogoutClick: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        color = Color.White, shape = MaterialTheme.shapes.medium
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        color = Color.White,
+        shape = MaterialTheme.shapes.medium
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onLogoutClick).padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onLogoutClick)
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Icon(imageVector = Icons.Default.ExitToApp, contentDescription = null, tint = Color.Red)
+            Icon(
+                imageVector = Icons.Default.ExitToApp,
+                contentDescription = null,
+                tint = Color.Red
+            )
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = "Logout", color = Color.Red, fontWeight = FontWeight.Medium)
         }
@@ -246,75 +353,147 @@ fun LogoutButton(onLogoutClick: () -> Unit) {
 }
 
 @Composable
-fun EditProfileDialog(currentName: String, currentEmail: String, onDismiss: () -> Unit, onSave: (String, String) -> Unit) {
+fun EditProfileDialog(
+    currentName: String,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
     var name by remember { mutableStateOf(currentName) }
+    var isError by remember { mutableStateOf(false) }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit Profile") },
         text = {
             Column {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Full Name") })
-                OutlinedTextField(value = currentEmail, onValueChange = {}, label = { Text("Email") }, enabled = false)
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        name = it
+                        isError = it.isBlank()
+                    },
+                    label = { Text("Full Name") },
+                    isError = isError,
+                    supportingText = if (isError) {
+                        { Text("Name cannot be empty") }
+                    } else null
+                )
             }
         },
-        confirmButton = { Button(onClick = { onSave(name, currentEmail) }) { Text("Save") } },
+        confirmButton = {
+            Button(
+                onClick = { if (name.isNotBlank()) onSave(name) },
+                enabled = name.isNotBlank()
+            ) {
+                Text("Save")
+            }
+        },
         dismissButton = { Button(onClick = onDismiss) { Text("Cancel") } }
     )
 }
 
 @Composable
-fun GoalsDialog(currentCalories: Int, currentProtein: Int, currentCarbs: Int, currentFat: Int, onDismiss: () -> Unit, onSave: (Int, Int, Int, Int) -> Unit) {
+fun GoalsDialog(
+    currentCalories: Int,
+    currentProtein: Int,
+    currentCarbs: Int,
+    currentFat: Int,
+    onDismiss: () -> Unit,
+    onSave: (Int, Int, Int, Int) -> Unit
+) {
     var calories by remember { mutableStateOf(currentCalories.toString()) }
     var protein by remember { mutableStateOf(currentProtein.toString()) }
     var carbs by remember { mutableStateOf(currentCarbs.toString()) }
     var fat by remember { mutableStateOf(currentFat.toString()) }
+
+    val isValid = calories.toIntOrNull()?.let { it > 0 } == true &&
+            protein.toIntOrNull()?.let { it >= 0 } == true &&
+            carbs.toIntOrNull()?.let { it >= 0 } == true &&
+            fat.toIntOrNull()?.let { it >= 0 } == true
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit Daily Goals") },
         text = {
-            Column {
-                OutlinedTextField(value = calories, onValueChange = { calories = it }, label = { Text("Calories") })
-                OutlinedTextField(value = protein, onValueChange = { protein = it }, label = { Text("Protein (g)") })
-                OutlinedTextField(value = carbs, onValueChange = { carbs = it }, label = { Text("Carbs (g)") })
-                OutlinedTextField(value = fat, onValueChange = { fat = it }, label = { Text("Fat (g)") })
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = calories,
+                    onValueChange = { calories = it.filter { c -> c.isDigit() } },
+                    label = { Text("Calories") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = protein,
+                    onValueChange = { protein = it.filter { c -> c.isDigit() } },
+                    label = { Text("Protein (g)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = carbs,
+                    onValueChange = { carbs = it.filter { c -> c.isDigit() } },
+                    label = { Text("Carbs (g)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = fat,
+                    onValueChange = { fat = it.filter { c -> c.isDigit() } },
+                    label = { Text("Fat (g)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
-        confirmButton = { Button(onClick = { onSave(calories.toIntOrNull() ?: 0, protein.toIntOrNull() ?: 0, carbs.toIntOrNull() ?: 0, fat.toIntOrNull() ?: 0) }) { Text("Save") } },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onSave(
+                        calories.toInt(),
+                        protein.toInt(),
+                        carbs.toInt(),
+                        fat.toInt()
+                    )
+                },
+                enabled = isValid
+            ) {
+                Text("Save")
+            }
+        },
         dismissButton = { Button(onClick = onDismiss) { Text("Cancel") } }
     )
 }
 
 @Composable
-fun WeightGoalDialog(currentWeight: Int, onDismiss: () -> Unit, onSave: (Int) -> Unit) {
-    var weight by remember { mutableStateOf(currentWeight.toString()) }
+fun WeightGoalDialog(
+    currentWeight: Int,
+    onDismiss: () -> Unit,
+    onSave: (Int) -> Unit
+) {
+    var weight by remember { mutableStateOf(if (currentWeight > 0) currentWeight.toString() else "") }
+    val isValid = weight.toIntOrNull()?.let { it > 0 } == true
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit Weight Goal") },
-        text = { OutlinedTextField(value = weight, onValueChange = { weight = it }, label = { Text("Weight (kg)") }) },
-        confirmButton = { Button(onClick = { onSave(weight.toIntOrNull() ?: 0) }) { Text("Save") } },
-        dismissButton = { Button(onClick = onDismiss) { Text("Cancel") } }
-    )
-}
-
-@Composable
-fun UnitsDialog(currentUnit: String, onDismiss: () -> Unit, onSelect: (String) -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Select Unit System") },
         text = {
-            Column {
-                Row(Modifier.fillMaxWidth().clickable { onSelect("Metric") }.padding(vertical = 8.dp)) {
-                    RadioButton(selected = currentUnit == "Metric", onClick = { onSelect("Metric") })
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Metric (kg, g)")
-                }
-                Row(Modifier.fillMaxWidth().clickable { onSelect("Imperial") }.padding(vertical = 8.dp)) {
-                    RadioButton(selected = currentUnit == "Imperial", onClick = { onSelect("Imperial") })
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Imperial (lbs, oz)")
-                }
+            OutlinedTextField(
+                value = weight,
+                onValueChange = { weight = it.filter { c -> c.isDigit() } },
+                label = { Text("Weight (kg)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSave(weight.toInt()) },
+                enabled = isValid
+            ) {
+                Text("Save")
             }
         },
-        confirmButton = { Button(onClick = onDismiss) { Text("Close") } }
+        dismissButton = { Button(onClick = onDismiss) { Text("Cancel") } }
     )
 }

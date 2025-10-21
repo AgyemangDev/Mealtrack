@@ -4,11 +4,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.diettracker.data.AgeRangeInfo
+import com.example.diettracker.data.UserPreferencesManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun FinishButton(
@@ -20,6 +25,8 @@ fun FinishButton(
     onSuccess: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val userPreferences = remember { UserPreferencesManager(context) }
     val firestore = FirebaseFirestore.getInstance()
     val auth = FirebaseAuth.getInstance()
 
@@ -59,6 +66,12 @@ fun FinishButton(
                             .document(uid)
                             .set(userData)
                             .addOnSuccessListener {
+                                // 5️⃣ Save user data to DataStore
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    userPreferences.saveUserName(fullName)
+                                    userPreferences.saveUserEmail(email)
+                                }
+
                                 isLoading = false
                                 showSuccessDialog = true
                             }
@@ -81,7 +94,7 @@ fun FinishButton(
         )
     }
 
-    // ✅ Success Dialog
+
     if (showSuccessDialog) {
         AlertDialog(
             onDismissRequest = { showSuccessDialog = false },
@@ -101,7 +114,7 @@ fun FinishButton(
         )
     }
 
-    // ❌ Error Dialog
+
     if (errorMessage != null) {
         AlertDialog(
             onDismissRequest = { errorMessage = null },

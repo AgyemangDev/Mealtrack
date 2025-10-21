@@ -1,22 +1,26 @@
 package com.example.diettracker.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import android.util.Log
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.diettracker.data.UserPreferencesManager
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
-class SettingsViewModel : ViewModel() {
-
+class SettingsViewModel(application: Application) : AndroidViewModel(application) {
+    private val userPreferences = UserPreferencesManager(application.applicationContext)
     private val auth = FirebaseAuth.getInstance()
 
-    // Initialize with current Firebase user data, or placeholders if not available
-    private val _userName = MutableStateFlow(auth.currentUser?.displayName ?: "User")
+    private val _userName = MutableStateFlow("User")
     val userName: StateFlow<String> = _userName
 
-    private val _userEmail = MutableStateFlow(auth.currentUser?.email ?: "email@example.com")
+    private val _userEmail = MutableStateFlow("")
     val userEmail: StateFlow<String> = _userEmail
 
-    // In a real app, these would be loaded from Firestore
     private val _calorieGoal = MutableStateFlow(2000)
     val calorieGoal: StateFlow<Int> = _calorieGoal
 
@@ -29,7 +33,7 @@ class SettingsViewModel : ViewModel() {
     private val _fatGoal = MutableStateFlow(70)
     val fatGoal: StateFlow<Int> = _fatGoal
 
-    private val _weightGoal = MutableStateFlow(75)
+    private val _weightGoal = MutableStateFlow(0)
     val weightGoal: StateFlow<Int> = _weightGoal
 
     private val _darkModeEnabled = MutableStateFlow(false)
@@ -41,44 +45,113 @@ class SettingsViewModel : ViewModel() {
     private val _unitSystem = MutableStateFlow("Metric")
     val unitSystem: StateFlow<String> = _unitSystem
 
+    private val _isLoggingOut = MutableStateFlow(false)
+    val isLoggingOut: StateFlow<Boolean> = _isLoggingOut
+
+    init {
+        loadUserData()
+    }
+
+    private fun loadUserData() {
+        viewModelScope.launch {
+            userPreferences.userName.collect { name ->
+                _userName.value = name
+            }
+        }
+        viewModelScope.launch {
+            userPreferences.userEmail.collect { email ->
+                _userEmail.value = email
+            }
+        }
+
+        // Load current user from Firebase
+        auth.currentUser?.let { user ->
+            if (_userEmail.value.isEmpty()) {
+                _userEmail.value = user.email ?: ""
+            }
+            if (_userName.value == "User") {
+                _userName.value = user.displayName ?: "User"
+            }
+        }
+    }
+
     fun updateProfile(name: String, email: String) {
-        // Here you would update Firebase Auth and/or Firestore
-        _userName.value = name
+        viewModelScope.launch {
+            userPreferences.saveUserName(name)
+            _userName.value = name
+        }
     }
 
     fun updateNutritionGoals(calories: Int, protein: Int, carbs: Int, fat: Int) {
-        // Here you would save these to Firestore
-        _calorieGoal.value = calories
-        _proteinGoal.value = protein
-        _carbsGoal.value = carbs
-        _fatGoal.value = fat
+        viewModelScope.launch {
+            _calorieGoal.value = calories
+            _proteinGoal.value = protein
+            _carbsGoal.value = carbs
+            _fatGoal.value = fat
+
+            // Optionally save to preferences
+            // userPreferences.saveNutritionGoals(calories, protein, carbs, fat)
+        }
     }
 
     fun setWeightGoal(weight: Int) {
-        _weightGoal.value = weight
+        viewModelScope.launch {
+            _weightGoal.value = weight
+            // Optionally save to preferences
+            // userPreferences.saveWeightGoal(weight)
+        }
     }
 
     fun setDarkMode(enabled: Boolean) {
-        _darkModeEnabled.value = enabled
+        viewModelScope.launch {
+            _darkModeEnabled.value = enabled
+            // Optionally save to preferences
+            // userPreferences.saveDarkMode(enabled)
+        }
     }
 
     fun setNotifications(enabled: Boolean) {
-        _notificationsEnabled.value = enabled
+        viewModelScope.launch {
+            _notificationsEnabled.value = enabled
+            // Optionally save to preferences
+            // userPreferences.saveNotifications(enabled)
+        }
     }
 
-    fun setUnitSystem(unit: String) {
-        _unitSystem.value = unit
-    }
+    suspend fun logoutSuspend() {
+        try {
+            _isLoggingOut.value = true
+            Log.d("SettingsViewModel", "Starting logout process")
 
-    fun exportData() {
-        // Placeholder for data export logic
-    }
+            // Sign out from Firebase (await if using Tasks API)
+            auth.signOut()
+            Log.d("SettingsViewModel", "Firebase sign out complete")
 
-    fun clearHistory() {
-        // Placeholder for clearing history (e.g., deleting all documents in a Firestore collection)
+            // Clear local data
+            userPreferences.clearAllData()
+            Log.d("SettingsViewModel", "Local data cleared")
+
+            // Reset all values
+            _userName.value = "User"
+            _userEmail.value = ""
+            _calorieGoal.value = 2000
+            _proteinGoal.value = 150
+            _carbsGoal.value = 250
+            _fatGoal.value = 70
+            _weightGoal.value = 0
+
+            Log.d("SettingsViewModel", "Logout complete")
+        } catch (e: Exception) {
+            Log.e("SettingsViewModel", "Logout failed", e)
+            throw e
+        } finally {
+            _isLoggingOut.value = false
+        }
     }
 
     fun logout() {
-        auth.signOut()
+        viewModelScope.launch {
+            logoutSuspend()
+        }
     }
 }

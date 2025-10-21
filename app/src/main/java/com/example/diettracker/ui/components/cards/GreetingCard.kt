@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun GreetingCard(
     greeting: String,
-    userName: String,
+    userName: String = "User",
     currentDateTime: String,
     modifier: Modifier = Modifier
 ) {

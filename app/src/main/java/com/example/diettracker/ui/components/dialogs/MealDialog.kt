@@ -180,7 +180,7 @@ fun MealDialog(
                 OutlinedTextField(
                     value = vitamins,
                     onValueChange = { vitamins = it },
-                    label = { Text("Vitamin C (mg)") },
+                    label = { Text("Vitamins (mg)") },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true
