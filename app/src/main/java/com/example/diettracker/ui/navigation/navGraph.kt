@@ -30,8 +30,13 @@ fun NavGraph(navController: NavHostController) {
             RegisterScreen(navController)
         }
 
+        composable(Screen.Main.route) {
+            MainScreen(navController) // pass same NavController
+        }
+
+        // Example for AgeRange & DailyUsage with arguments
         composable(
-            route = Screen.AgeRange.route,
+            route = Screen.AgeRange.route + "/{fullName}/{email}/{password}",
             arguments = listOf(
                 navArgument("fullName") { type = NavType.StringType },
                 navArgument("email") { type = NavType.StringType },
@@ -45,7 +50,7 @@ fun NavGraph(navController: NavHostController) {
         }
 
         composable(
-            route = Screen.DailyUsage.route,
+            route = Screen.DailyUsage.route + "/{fullName}/{email}/{password}/{ageRange}",
             arguments = listOf(
                 navArgument("fullName") { type = NavType.StringType },
                 navArgument("email") { type = NavType.StringType },
@@ -58,11 +63,6 @@ fun NavGraph(navController: NavHostController) {
             val password = backStackEntry.arguments?.getString("password") ?: ""
             val ageRange = backStackEntry.arguments?.getString("ageRange") ?: ""
             DailyUsage(navController, fullName, email, password, ageRange)
-        }
-
-        // ✅ Navigate to the bottom navigation container after login
-        composable(Screen.Main.route) {
-            MainScreen()
         }
     }
 }

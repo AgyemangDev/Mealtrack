@@ -1,48 +1,50 @@
 package com.example.diettracker.ui.screens
 
+import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.diettracker.data.ageRangeData
+import com.example.diettracker.models.UserViewModel
 import com.example.diettracker.ui.components.cards.ProfileCard
 import com.example.diettracker.ui.components.buttons.LogoutButton
-import com.example.diettracker.ui.components.dialogs.LogoutDialog
 import com.example.diettracker.ui.components.dialogs.EditProfileDialog
-import com.example.diettracker.ui.components.sections.SettingsSection
-import com.example.diettracker.ui.components.lists.SettingsItem
-import com.example.diettracker.ui.components.lists.SettingsSwitchItem
+import com.example.diettracker.ui.components.dialogs.LogoutDialog
 import com.example.diettracker.viewmodel.SettingsViewModel
-import kotlinx.coroutines.launch
+import androidx.navigation.NavController
+import com.example.diettracker.ui.navigation.Screen
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingScreen(
-    settingsViewModel: SettingsViewModel = viewModel(),
-    userViewModel: UserViewModel = viewModel(), // ✅ Add UserViewModel
-    onLogoutComplete: () -> Unit = {}
+    userViewModel: UserViewModel = viewModel(),
+    navController: NavController
 ) {
-    // Observe the full user object
+    BackHandler(enabled = true) {}
+    val settingsViewModel: SettingsViewModel = viewModel()
     val user by userViewModel.user.collectAsState()
 
-    // Get full name like in HomeScreen
-    val userFullName = user?.fullName?.split(" ")?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
-        ?: "User"
+    // --- Full Name ---
+    val userFullName = user?.fullName?.split(" ")?.joinToString(" ") {
+        it.replaceFirstChar { c -> c.uppercase() }
+    } ?: "User"
+    val userEmail = user?.email ?: "email@example.com"
 
-    val userEmail = user?.email ?: "email@example.com" // fallback
-    val isLoggingOut by settingsViewModel.isLoggingOut.collectAsState()
+    // --- Match age range data ---
+    val matchedAgeData = ageRangeData.find { it.range == user?.ageRange } ?: ageRangeData[1]
+    val calorieGoal = matchedAgeData.calories
+    val proteinGoal = matchedAgeData.nutrients.protein.value.removeSuffix("g").toInt()
+    val carbsGoal = matchedAgeData.nutrients.carbohydrates.value.removeSuffix("g").toInt()
+    val fatsGoal = matchedAgeData.nutrients.fats.value.removeSuffix("g").toInt()
 
-    // Dialog states
     var showEditProfileDialog by remember { mutableStateOf(false) }
-    var showGoalsDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -50,12 +52,6 @@ fun SettingScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
-        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -64,113 +60,46 @@ fun SettingScreen(
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
+            // --- Profile Card ---
             ProfileCard(
-                userName = userFullName, // ✅ Use full name
+                userName = userFullName,
                 userEmail = userEmail,
+                calorieGoal = calorieGoal,
+                proteinGoal = proteinGoal,
+                carbsGoal = carbsGoal,
+                fatGoal = fatsGoal,
+                userAgeRange = user?.ageRange ?: "18-25",
+                userViewModel = userViewModel,
                 onEditClick = { showEditProfileDialog = true }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             Spacer(modifier = Modifier.height(32.dp))
+
+
+            LogoutButton(onLogoutClick = { showLogoutDialog = true })
         }
     }
 
-    DialogHandlers(
-        showEditProfileDialog = showEditProfileDialog,
-        showGoalsDialog = showGoalsDialog,
-        showLogoutDialog = showLogoutDialog,
-        userName = userFullName, // ✅ Use full name here too
-        userEmail = userEmail,
-        isLoggingOut = isLoggingOut,
-        settingsViewModel = settingsViewModel,
-        onDismissEditProfile = { showEditProfileDialog = false },
-        onDismissGoals = { showGoalsDialog = false },
-        onDismissLogout = { showLogoutDialog = false },
-        onLogoutComplete = onLogoutComplete,
-        snackbarHostState = snackbarHostState
-    )
-}
-
-@Composable
-private fun GoalsSection(
-    calorieGoal: Int,
-    proteinGoal: Int,
-    carbsGoal: Int,
-    fatGoal: Int,
-    onGoalsClick: () -> Unit
-) {
-    SettingsSection(title = "Goals") {
-        SettingsItem(
-            icon = Icons.Default.Info,
-            title = "Daily Nutrition Goals",
-            subtitle = "$calorieGoal kcal • ${proteinGoal}g protein • ${carbsGoal}g carbs • ${fatGoal}g fat",
-            onClick = onGoalsClick
-        )
-    }
-}
-
-@Composable
-private fun PreferencesSection(
-    unitSystem: String,
-    onUnitSystemClick: () -> Unit
-) {
-    SettingsSection(title = "Preferences") {
-        SettingsItem(
-            icon = Icons.Default.Speed,
-            title = "Unit System",
-            subtitle = unitSystem,
-            onClick = onUnitSystemClick
-        )
-    }
-}
-
-@Composable
-private fun DialogHandlers(
-    showEditProfileDialog: Boolean,
-    showGoalsDialog: Boolean,
-    showLogoutDialog: Boolean,
-    userName: String,
-    userEmail: String,
-    calorieGoal: Int,
-    proteinGoal: Int,
-    carbsGoal: Int,
-    fatGoal: Int,
-    isLoggingOut: Boolean,
-    settingsViewModel: SettingsViewModel,
-    onDismissEditProfile: () -> Unit,
-    onDismissGoals: () -> Unit,
-    onDismissLogout: () -> Unit,
-    onLogoutComplete: () -> Unit,
-    snackbarHostState: SnackbarHostState,
-    scope: kotlinx.coroutines.CoroutineScope
-) {
+    // --- Dialogs ---
     if (showEditProfileDialog) {
         EditProfileDialog(
-            currentName = userName,
-            onDismiss = onDismissEditProfile,
+            currentName = userFullName,
+            onDismiss = { showEditProfileDialog = false },
             onSave = { name ->
                 settingsViewModel.updateProfile(name, userEmail)
-                onDismissEditProfile()
+                showEditProfileDialog = false
             }
         )
     }
 
-
     if (showLogoutDialog) {
         LogoutDialog(
-            isLoggingOut = isLoggingOut,
-            onDismiss = onDismissLogout,
-            onConfirm = {
-                scope.launch {
-                    try {
-                        settingsViewModel.logoutSuspend()
-                        onDismissLogout()
-                        onLogoutComplete()
-                    } catch (e: Exception) {
-                        snackbarHostState.showSnackbar("Logout failed: ${e.message}")
-                        onDismissLogout()
-                    }
+            onDismiss = { showLogoutDialog = false },
+            onLogoutComplete = {
+                showLogoutDialog = false
+                navController.navigate(Screen.Welcome.route) {
+
+                    popUpTo(0) { inclusive = true } // clears the stack
                 }
             }
         )

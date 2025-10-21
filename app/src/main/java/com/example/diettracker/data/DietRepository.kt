@@ -32,17 +32,17 @@ object DietRepository {
         val userDocRef = firestore.collection("usersDiet").document(userId)
         val snapshot = userDocRef.get().await()
 
-        // Safely handle missing data
+
         val existingData = snapshot.data ?: mapOf("days" to listOf<Map<String, Any>>())
         val days = (existingData["days"] as? List<Map<String, Any>>)?.toMutableList() ?: mutableListOf()
 
-        // Find or create today's entry
+
         val todayEntry = days.find { it["date"] == todayDate }?.toMutableMap()
             ?: mutableMapOf("date" to todayDate, "meals" to mutableListOf<Map<String, Any>>())
 
         val meals = (todayEntry["meals"] as? MutableList<Map<String, Any>>)?.toMutableList() ?: mutableListOf()
 
-        // Find or create meal type
+
         val mealEntry = meals.find { it["type"] == mealType }?.toMutableMap()
             ?: mutableMapOf("type" to mealType, "foods" to mutableListOf<Map<String, Any>>())
 
@@ -61,19 +61,65 @@ object DietRepository {
         foods.add(foodMap)
         mealEntry["foods"] = foods
 
-        // Replace or add meal entry
+
         val mealIndex = meals.indexOfFirst { it["type"] == mealType }
         if (mealIndex >= 0) meals[mealIndex] = mealEntry else meals.add(mealEntry)
 
         todayEntry["meals"] = meals
 
-        // Replace or add today's entry
+
         val dayIndex = days.indexOfFirst { it["date"] == todayDate }
         if (dayIndex >= 0) days[dayIndex] = todayEntry else days.add(todayEntry)
 
-        // ✅ Explicitly cast final structure to Map<String, Any>
+
         val finalData: Map<String, Any> = mapOf("days" to days)
 
         userDocRef.set(finalData).await()
     }
+
+    suspend fun deleteFoodForUser(userId: String, foodToDelete: FoodItem) {
+        val timestamp = System.currentTimeMillis()
+        val todayDate = getFormattedDate(timestamp)
+        val mealType = getMealTypeFromHour(timestamp)
+
+        val userDocRef = firestore.collection("usersDiet").document(userId)
+        val snapshot = userDocRef.get().await()
+
+        val existingData = snapshot.data ?: return
+        val days = (existingData["days"] as? List<Map<String, Any>>)?.toMutableList() ?: return
+
+        // Find today's entry
+        val todayIndex = days.indexOfFirst { it["date"] == todayDate }
+        if (todayIndex < 0) return
+
+        val todayEntry = days[todayIndex].toMutableMap()
+        val meals = (todayEntry["meals"] as? MutableList<Map<String, Any>>)?.toMutableList() ?: return
+
+        // Find the meal type
+        val mealIndex = meals.indexOfFirst { it["type"] == mealType }
+        if (mealIndex < 0) return
+
+        val mealEntry = meals[mealIndex].toMutableMap()
+        val foods = (mealEntry["foods"] as? MutableList<Map<String, Any>>)?.toMutableList() ?: return
+
+
+        val foodIndex = foods.indexOfFirst { foodMap ->
+            val name = foodMap["name"] as? String ?: ""
+            val calories = (foodMap["calories"] as? Number)?.toInt() ?: 0
+            name == (foodToDelete.name ?: "") && calories == (foodToDelete.calories ?: 0)
+        }
+
+        if (foodIndex >= 0) {
+            foods.removeAt(foodIndex)
+            mealEntry["foods"] = foods
+            meals[mealIndex] = mealEntry
+            todayEntry["meals"] = meals
+            days[todayIndex] = todayEntry
+
+            // Write back updated structure
+            val finalData: Map<String, Any> = mapOf("days" to days)
+            userDocRef.set(finalData).await()
+        }
+    }
+
 }

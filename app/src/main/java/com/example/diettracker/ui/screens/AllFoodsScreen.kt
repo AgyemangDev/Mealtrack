@@ -62,7 +62,7 @@ fun AllFoodsScreen(
                         items(meal.foods) { food ->
                             FoodItemCard(
                                 food = food,
-                                onEdit = { /* Optional: implement editing */ },
+
                                 onDelete = { /* Optional: implement deleting */ }
                             )
                         }

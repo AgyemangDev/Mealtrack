@@ -6,9 +6,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,14 +18,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.diettracker.data.DietRepository
 import com.example.diettracker.models.FoodItem
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 @Composable
 fun FoodItemCard(
     food: FoodItem,
-    onEdit: () -> Unit = {},
     onDelete: () -> Unit = {}
 ) {
+    val scope = rememberCoroutineScope()
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -39,7 +43,7 @@ fun FoodItemCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // 🔹 Header Section
+            // 🔹 Header row: Food name + delete button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -64,55 +68,47 @@ fun FoodItemCard(
                     )
                 }
 
-                // 🔹 Action Buttons
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    IconButton(
-                        onClick = onEdit,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(Color(0xFFE8F5E9), CircleShape),
-                        colors = IconButtonDefaults.iconButtonColors(contentColor = Color(0xFF4CAF50))
-                    ) {
-                        Icon(Icons.Outlined.Edit, contentDescription = "Edit", modifier = Modifier.size(18.dp))
-                    }
-
-                    IconButton(
-                        onClick = onDelete,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(Color(0xFFFFEBEE), CircleShape),
-                        colors = IconButtonDefaults.iconButtonColors(contentColor = Color(0xFFF44336))
-                    ) {
-                        Icon(Icons.Outlined.Delete, contentDescription = "Delete", modifier = Modifier.size(18.dp))
-                    }
+                // ✅ Delete button only
+                IconButton(
+                    onClick = {
+                        scope.launch {
+                            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
+                            DietRepository.deleteFoodForUser(userId, food)
+                            onDelete()
+                        }
+                    },
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(Color(0xFFFFEBEE), CircleShape),
+                    colors = IconButtonDefaults.iconButtonColors(contentColor = Color(0xFFF44336))
+                ) {
+                    Icon(Icons.Outlined.Delete, contentDescription = "Delete", modifier = Modifier.size(18.dp))
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // 🔹 Row 1: Calories + Protein
-// 🔹 Row 1: Calories + Protein
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 NutrientInfoInline("Calories", food.calories, "kcal", Modifier.weight(1f))
-                Spacer(modifier = Modifier.width(16.dp)) // 👈 small gap between left & right
+                Spacer(modifier = Modifier.width(16.dp))
                 NutrientInfoInline("Protein", food.protein, "g", Modifier.weight(1f))
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-// 🔹 Row 2: Carbs + Fats
+            // 🔹 Row 2: Carbs + Fats
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 NutrientInfoInline("Carbs", food.carbs, "g", Modifier.weight(1f))
-                Spacer(modifier = Modifier.width(16.dp)) // 👈 same gap between left & right
+                Spacer(modifier = Modifier.width(16.dp))
                 NutrientInfoInline("Fats", food.fats, "g", Modifier.weight(1f))
             }
-
         }
     }
 }
@@ -155,4 +151,3 @@ fun NutrientInfoInline(
         )
     }
 }
-

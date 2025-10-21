@@ -8,6 +8,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -17,7 +18,7 @@ import com.example.diettracker.ui.navigation.BottomNavBar
 import com.example.diettracker.ui.navigation.BottomNavItem
 
 @Composable
-fun MainScreen() {
+fun MainScreen(navController: NavController) {
     val navController = rememberNavController()
 
     Log.d("MainScreen", "=== MainScreen Initialized ===")
@@ -75,7 +76,8 @@ fun MainScreen() {
                 // Profile / Settings Screen
                 composable(BottomNavItem.Profile.route) {
                     Log.d("MainScreen", "Navigating to Settings Screen")
-                    SettingScreen()
+                    SettingScreen(navController = navController)
+
                 }
             }
         }
