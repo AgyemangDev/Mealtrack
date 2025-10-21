@@ -32,11 +32,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.diettracker.models.Food
 import com.example.diettracker.models.FoodItem
+import com.example.diettracker.ui.empty.EmptyState
 import com.example.diettracker.ui.components.cards.FoodItemCard
 import com.example.diettracker.ui.components.headers.AppHeader
 import com.example.diettracker.viewmodel.FoodViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
+import com.example.diettracker.R
+
 
 @Composable
 fun AllFoodsScreen(navController: NavHostController, foodViewModel: FoodViewModel = viewModel()) {
@@ -56,40 +59,49 @@ fun AllFoodsScreen(navController: NavHostController, foodViewModel: FoodViewMode
             )
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-            foodItemsByDate.forEach { (date, foods) ->
-                item {
-                    Text(
-                        text = date,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-                items(foods) { food ->
-                    FoodItemCard(
-                        food = FoodItem(
-                            name = food.name,
-                            unit = "${food.amount.toInt()} ${food.unit}",
-                            calories = food.calories.toInt(),
-                            protein = food.protein.toInt(),
-                            carbs = food.carbs.toInt(),
-                            fats = food.fat.toInt()
-                        ),
-                        onEdit = { showEditDialog = food },
-                        onDelete = { showDeleteDialog = food }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+        if (foodItems.isEmpty()) {
+            // 👉 show the empty placeholder
+            EmptyState(
+                message = "No foods added yet!",
+                imageRes = R.drawable.empty
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item { Spacer(modifier = Modifier.height(8.dp)) }
+                foodItemsByDate.forEach { (date, foods) ->
+                    item {
+                        Text(
+                            text = date,
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
+                    items(foods) { food ->
+                        FoodItemCard(
+                            food = FoodItem(
+                                name = food.name,
+                                unit = "${food.amount.toInt()} ${food.unit}",
+                                calories = food.calories.toInt(),
+                                protein = food.protein.toInt(),
+                                carbs = food.carbs.toInt(),
+                                fats = food.fat.toInt()
+                            ),
+                            onEdit = { showEditDialog = food },
+                            onDelete = { showDeleteDialog = food }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
             }
         }
 
+        // dialogs remain unchanged
         showEditDialog?.let { foodToEdit ->
             EditFoodDialog(
                 food = foodToEdit,

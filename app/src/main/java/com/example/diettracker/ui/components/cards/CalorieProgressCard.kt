@@ -1,13 +1,6 @@
-package com.example.diettracker.ui.components.cards
-
-
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,8 +16,23 @@ fun CalorieProgressCard(
     modifier: Modifier = Modifier
 ) {
     val calorieProgress = (totalCalories.toFloat() / calorieGoal.toFloat()).coerceIn(0f, 1f)
+
+    // Color zones
+    val barColor = when {
+        calorieProgress < 0.4f -> Color(0xFFE57373) // Red
+        calorieProgress < 0.8f -> Color(0xFFFFD600) // Yellow
+        else -> Color(0xFF388E3C) // Green
+    }
+
+    // Status description
+    val statusText = when {
+        calorieProgress < 0.4f -> "Below recommended intake"
+        calorieProgress < 0.8f -> "Getting close to target"
+        else -> "Calorie goal met!"
+    }
+
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -42,24 +50,24 @@ fun CalorieProgressCard(
                 Text(
                     text = "$totalCalories/$calorieGoal kcal",
                     fontSize = 18.sp,
-                    color = Color(0xFF668405),
+                    color = barColor,
                     fontWeight = FontWeight.SemiBold
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "$totalCalories",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF668405)
-            )
-            Text(
-                text = "kcal consumed",
-                fontSize = 16.sp,
-                color = Color.Gray
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "$totalCalories kcal consumed",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = barColor
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -69,19 +77,17 @@ fun CalorieProgressCard(
                     .fillMaxWidth()
                     .height(12.dp)
                     .clip(RoundedCornerShape(6.dp)),
-                color = Color(0xFF668405),
+                color = barColor,
                 trackColor = Color(0xFFE0E0E0),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Goal: $calorieGoal kcal",
-                fontSize = 16.sp,
-                color = Color.Gray
+                text = statusText,
+                fontSize = 15.sp,
+                color = barColor
             )
         }
     }
-
-
 }

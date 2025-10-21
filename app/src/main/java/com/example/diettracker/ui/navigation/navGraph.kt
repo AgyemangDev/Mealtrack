@@ -12,8 +12,12 @@ import com.example.diettracker.ui.screens.*
 fun NavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Welcome.route
+        startDestination = Screen.Splash.route
     ) {
+        composable(Screen.Splash.route) {
+            SplashScreen(navController)
+        }
+
         composable(Screen.Welcome.route) {
             WelcomeScreen(navController)
         }

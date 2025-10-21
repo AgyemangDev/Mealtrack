@@ -1,5 +1,7 @@
 package com.example.diettracker.ui.screens
 
+import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -7,7 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -16,8 +18,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.diettracker.R
+import com.example.diettracker.data.ageRangeData
+import com.example.diettracker.models.UserViewModel
 import com.example.diettracker.ui.components.cards.MealInfo
 import com.example.diettracker.ui.components.headers.AppHeader
 
@@ -32,8 +37,20 @@ data class NutrientDetail(
 @Composable
 fun AllNutrientsScreen(
     meals: List<MealInfo>,
-    navController: NavController
+    navController: NavController,
+    userViewModel: UserViewModel = viewModel()
 ) {
+    // Disable swipe back gesture
+    BackHandler(enabled = true) { /* Do nothing */ }
+
+    // Observe user info
+    val user by userViewModel.user.collectAsState()
+
+    val matchedAgeData = ageRangeData.find { it.range == user?.ageRange } ?: ageRangeData[1]
+    Log.d("AllNutrientsScreen", "User: ${user?.fullName}, AgeRange: ${user?.ageRange}")
+    Log.d("AllNutrientsScreen", "Matched Age Data: ${matchedAgeData.label}, Calories: ${matchedAgeData.calories}")
+
+    // Totals from meals
     val totalCalories = meals.sumOf { it.calories }
     val totalProtein = meals.sumOf { it.protein }
     val totalCarbs = meals.sumOf { it.carbs }
@@ -42,11 +59,17 @@ fun AllNutrientsScreen(
     val totalIron = meals.sumOf { it.iron.toInt() }
     val totalVitamins = meals.sumOf { it.vitamins.toInt() }
 
+    // Goals from ageRangeData
+    val calorieGoal = matchedAgeData.calories
+    val proteinGoal = matchedAgeData.nutrients.protein.value.removeSuffix("g").toInt()
+    val carbsGoal = matchedAgeData.nutrients.carbohydrates.value.removeSuffix("g").toInt()
+    val fatsGoal = matchedAgeData.nutrients.fats.value.removeSuffix("g").toInt()
+
     val nutrients = listOf(
-        NutrientDetail("Calories", totalCalories, 2200, "kcal", R.drawable.nuts),
-        NutrientDetail("Protein", totalProtein, 150, "g", R.drawable.protein),
-        NutrientDetail("Carbs", totalCarbs, 250, "g", R.drawable.carbs),
-        NutrientDetail("Fats", totalFat, 70, "g", R.drawable.fats),
+        NutrientDetail("Calories", totalCalories, calorieGoal, "kcal", R.drawable.nuts),
+        NutrientDetail("Protein", totalProtein, proteinGoal, "g", R.drawable.protein),
+        NutrientDetail("Carbs", totalCarbs, carbsGoal, "g", R.drawable.carbs),
+        NutrientDetail("Fats", totalFat, fatsGoal, "g", R.drawable.fats),
         NutrientDetail("Calcium", totalCalcium, 1000, "mg", R.drawable.calcium),
         NutrientDetail("Iron", totalIron, 30, "mg", R.drawable.iron),
         NutrientDetail("Vitamins", totalVitamins, 30, "g", R.drawable.fruitsandveggies)
@@ -131,7 +154,7 @@ fun NutrientDetailCard(nutrient: NutrientDetail) {
 
             val progress = nutrient.current.toFloat() / nutrient.goal.toFloat()
             LinearProgressIndicator(
-                progress = { progress.coerceIn(0f, 1f) },
+                progress = progress.coerceIn(0f, 1f),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)

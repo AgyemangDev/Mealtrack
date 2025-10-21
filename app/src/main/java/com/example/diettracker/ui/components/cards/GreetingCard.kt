@@ -28,7 +28,7 @@ fun GreetingCard(
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
             Text(
-                text = "$greeting, $userName!",
+                text = "$userName, $greeting",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )

@@ -34,6 +34,10 @@ data class NutrientInfo(
 fun NutrientsPreviewSection(
     totalProtein: Int,
     totalCarbs: Int,
+    totalFats: Int,
+    proteinGoal: Int,
+    carbsGoal: Int,
+    fatsGoal: Int,
     onNavigateToAllNutrients: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -56,10 +60,11 @@ fun NutrientsPreviewSection(
             }
         }
 
-        // Nutrients List
+        // Nutrients List with dynamic goals
         val updatedNutrients = listOf(
-            NutrientInfo("Protein", totalProtein, 100, R.drawable.protein),
-            NutrientInfo("Carbs", totalCarbs, 250, R.drawable.cabo)
+            NutrientInfo("Protein", totalProtein, proteinGoal, R.drawable.protein),
+            NutrientInfo("Carbs", totalCarbs, carbsGoal, R.drawable.cabo),
+            NutrientInfo("Fats", totalFats, fatsGoal, R.drawable.fats) // add fats if needed
         )
 
         LazyRow(
